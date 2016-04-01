@@ -11,7 +11,7 @@ namespace simpleVulkan
        uint32_t m_width = 400;
        uint32_t m_height = 400;
        GLFWwindow* m_window;
-       useconds_t m_interval = 20;
+       useconds_t m_interval = 100;
 
    public:
        Application();

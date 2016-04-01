@@ -21,5 +21,6 @@ namespace simpleVulkan
 
        vk::CommandPool& getVkCommandPool();
        vk::CommandBuffer& getVkCommandBuffer(size_t index);
+       const std::vector<vk::CommandBuffer>& getVkCommandBuffers();
     };
 }

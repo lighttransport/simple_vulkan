@@ -18,7 +18,6 @@ layout (binding = 0) uniform Transfrom
 
 void main() 
 {
-    //mat2 matrix = {{2.0,0.0},{0.0,2.0}};
 	gl_Position = vec4(transform.matrix * inPos,0.0f,1.0f);
     outColor = vec4(0.0f,1.0f,1.0f,1.0f);
 }

@@ -51,5 +51,9 @@ namespace simpleVulkan
     {
         return m_cmdBuffers[index];
     }
+    const std::vector<vk::CommandBuffer>& CommandBuffers::getVkCommandBuffers()
+    {
+        return m_cmdBuffers;
+    }
 
 }

@@ -16,6 +16,9 @@ namespace simpleVulkan
        ~Queue();
 
        void init(vk::Device deivce);
+       Result submit(const std::vector<vk::CommandBuffer>& cmdBuffers);
+       Result wait();
+       Result present(vk::SwapchainKHR swapchain,uint32_t index);
 
        vk::Queue& getVkQueue();
    };

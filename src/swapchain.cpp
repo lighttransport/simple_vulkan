@@ -79,7 +79,6 @@ namespace simpleVulkan
             imageViewInfo.components().g(vk::ComponentSwizzle::eG);
             imageViewInfo.components().b(vk::ComponentSwizzle::eB);
             imageViewInfo.components().a(vk::ComponentSwizzle::eA);
-            //imageViewInfo.subresourceRange().aspectMask(aspect);
             imageViewInfo.subresourceRange().aspectMask(aspect);
             imageViewInfo.subresourceRange().baseMipLevel(0);
             imageViewInfo.subresourceRange().levelCount(1);

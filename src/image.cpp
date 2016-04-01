@@ -33,7 +33,7 @@ namespace simpleVulkan
         imageInfo.mipLevels(1);
         imageInfo.arrayLayers(1);
         imageInfo.samples(vk::SampleCountFlagBits::e1);
-        imageInfo.tiling(vk::ImageTiling::eLinear); //maybe
+        imageInfo.tiling(vk::ImageTiling::eLinear);
         imageInfo.usage(m_usage);
         imageInfo.sharingMode(vk::SharingMode::eExclusive);
         imageInfo.queueFamilyIndexCount(0);
