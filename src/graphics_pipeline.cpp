@@ -181,7 +181,7 @@ namespace simpleVulkan
         pipelineInfo.layout(m_pipelineLayout);
         pipelineInfo.renderPass(renderPass);
         pipelineInfo.subpass(0);
-        pipelineInfo.basePipelineHandle(0);
+        pipelineInfo.basePipelineHandle(vk::Pipeline());
         pipelineInfo.basePipelineIndex(0);
 
         //create GraphicPipeline

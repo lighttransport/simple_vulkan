@@ -21,7 +21,7 @@ namespace simpleVulkan
         appInfo.applicationVersion(applicationVersion);
         appInfo.pEngineName(engineName.c_str());
         appInfo.engineVersion(engineVersion);
-        appInfo.apiVersion(VK_API_VERSION_1_0);
+        appInfo.apiVersion(VK_API_VERSION);
        
         //std::vector<const char*> layers;
         //layers.push_back("VK_LAYER_LUNARG_param_checker");

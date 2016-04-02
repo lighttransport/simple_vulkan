@@ -2,7 +2,10 @@
 #include<array>
 #include<vector>
 #include<iostream>
+#ifdef _WIN32
+#else
 #include<unistd.h>
+#endif
 #include<string>
 #include<vulkan/vk_cpp.h>
 #include<vulkan/vulkan.h>
@@ -14,11 +17,14 @@ class TestApplication : public simpleVulkan::Application
     const vk::Format m_colorFormat = vk::Format::eB8G8R8A8Srgb;
     const vk::Format m_depthFormat = vk::Format::eD24UnormS8Uint;
 
-    const float m_vertexes[3][2] = {{0.0,1.0f},{0.86,-0.5f},{-0.86,-0.5f}};
-    float m_matrix[2][4] = {
-        {1.0f,0.0f,0.0f,0.0f},
-        {0.0f,1.0f,0.0f,0.0f}
-    };
+    float m_vertexes[3][2];
+	//= {{0.0,1.0f},{0.86,-0.5f},{-0.86,-0.5f}};
+    float m_matrix[2][4];
+	
+	//= {
+    //    {1.0f,0.0f,0.0f,0.0f},
+    //    {0.0f,1.0f,0.0f,0.0f}
+    //};
 
     const std::string m_vertexShaderName = "./vert.spv";
     const std::string m_fragShaderName = "./frag.spv";
@@ -78,7 +84,7 @@ class TestApplication : public simpleVulkan::Application
         }
 
         //get WindowSurface
-        glfwCreateWindowSurface(m_instance->getVkInstance(),window,nullptr,reinterpret_cast<VkSurfaceKHR*>(&m_windowSurface));
+        glfwCreateWindowSurface(static_cast<VkInstance>(m_instance->getVkInstance()) ,window,nullptr,reinterpret_cast<VkSurfaceKHR*>(&m_windowSurface));
 
         m_swapchain = new simpleVulkan::Swapchain();
         m_swapchain->create(m_device->getVkDevice(),m_windowSurface,vk::ImageUsageFlagBits::eColorAttachment,m_colorFormat,getWidth(),getHeight());
@@ -263,7 +269,7 @@ class TestApplication : public simpleVulkan::Application
         }
 
         //acquire NextImage
-        result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(),4000000,m_semaphore,nullptr,&m_bufferIndex);
+        result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(),4000000,m_semaphore,vk::Fence(),&m_bufferIndex);
         return true;
     }
     virtual void finalize() override
@@ -402,7 +408,7 @@ class TestApplication : public simpleVulkan::Application
         m_queue->present(m_swapchain->getVkSwapchainKHR(),m_bufferIndex);
 
         //acquire next Image
-        result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(),4000000,m_semaphore,nullptr,&m_bufferIndex);
+        result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(),4000000,m_semaphore,vk::Fence(),&m_bufferIndex);
         std::cout << glfwGetTime() <<  std::endl;
         ++m_count;
         return true;
