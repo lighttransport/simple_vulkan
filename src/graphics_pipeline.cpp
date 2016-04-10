@@ -99,7 +99,7 @@ namespace simpleVulkan
         rasterizationInfo.depthClampEnable(false);
         rasterizationInfo.rasterizerDiscardEnable(false);
         rasterizationInfo.polygonMode(vk::PolygonMode::eFill);
-        rasterizationInfo.cullMode(vk::CullModeFlagBits::eBack);
+        rasterizationInfo.cullMode(vk::CullModeFlagBits::eNone);
         rasterizationInfo.frontFace(vk::FrontFace::eCounterClockwise);
         rasterizationInfo.depthBiasEnable(false);
         rasterizationInfo.depthBiasConstantFactor(0.0f);

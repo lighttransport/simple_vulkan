@@ -141,26 +141,11 @@ class TestApplication : public simpleVulkan::Application
         //end CommandBuffer
         result = m_cmdBuf->getVkCommandBuffer(0).end();
 
-        {
-            //init SubmitInfo
-            vk::SubmitInfo submitInfo;
-            submitInfo.waitSemaphoreCount(0);
-            submitInfo.pWaitSemaphores(nullptr);
-            vk::PipelineStageFlags pipeStageFlags(vk::PipelineStageFlagBits::eBottomOfPipe);
-            submitInfo.pWaitDstStageMask(&pipeStageFlags);
-            submitInfo.commandBufferCount(1);
-            submitInfo.pCommandBuffers(&m_cmdBuf->getVkCommandBuffer(0));
-            submitInfo.signalSemaphoreCount(0);
-            submitInfo.pSignalSemaphores(nullptr);
-
-            //submit queue
-            result = m_queue->getVkQueue().submit(1,&submitInfo,nullptr);
-        }
+        //init SubmitInfo
+        m_queue->submit(m_cmdBuf->getVkCommandBuffers());
 
         //wait queue
-        result = m_queue->getVkQueue().waitIdle();
-
-
+        m_queue->wait();
 
         //read VertexShader
         std::vector<uint8_t> code(0);
@@ -214,7 +199,7 @@ class TestApplication : public simpleVulkan::Application
         std::vector<vk::DescriptorSetLayoutBinding> layoutBinding(1);
         layoutBinding[0].binding(0);
         layoutBinding[0].descriptorType(vk::DescriptorType::eUniformBuffer);
-        layoutBinding[9].stageFlags(vk::ShaderStageFlagBits::eVertex);
+        layoutBinding[0].stageFlags(vk::ShaderStageFlagBits::eVertex);
         layoutBinding[0].pImmutableSamplers(nullptr);
         layoutBinding[0].descriptorCount(1);
 
@@ -409,39 +394,12 @@ class TestApplication : public simpleVulkan::Application
         //end CommandBuffer
         m_cmdBuf->getVkCommandBuffer(0).end();
 
-
-        {
-            //init SubmitInfo
-            vk::SubmitInfo submitInfo;
-            vk::PipelineStageFlags pipeStageFlags(vk::PipelineStageFlagBits::eBottomOfPipe);
-            submitInfo.waitSemaphoreCount(0);
-            submitInfo.pWaitSemaphores(nullptr);
-            submitInfo.pWaitDstStageMask(&pipeStageFlags);
-            submitInfo.commandBufferCount(1);
-            submitInfo.pCommandBuffers(&m_cmdBuf->getVkCommandBuffer(0));
-            submitInfo.signalSemaphoreCount(0);
-            submitInfo.pSignalSemaphores(nullptr);
-
-            //submit Queue
-            result = m_queue->getVkQueue().submit(1,&submitInfo,nullptr);
-        }
-
+        m_queue->submit(m_cmdBuf->getVkCommandBuffers());
+        
         //wait Queue
-        result = m_device->getVkDevice().waitIdle();
+        m_queue->wait();
 
-        {
-            //init PresentInfoKHR
-            vk::PresentInfoKHR presentInfo;
-            presentInfo.swapchainCount(1);
-            presentInfo.pSwapchains(&m_swapchain->getVkSwapchainKHR());
-            presentInfo.pImageIndices(&m_bufferIndex);
-            presentInfo.waitSemaphoreCount(0);
-            presentInfo.pWaitSemaphores(nullptr);
-            presentInfo.pResults(nullptr);
-
-            //present
-            result = m_queue->getVkQueue().presentKHR(&presentInfo);
-        }
+        m_queue->present(m_swapchain->getVkSwapchainKHR(),m_bufferIndex);
 
         //acquire next Image
         result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(),4000000,m_semaphore,nullptr,&m_bufferIndex);

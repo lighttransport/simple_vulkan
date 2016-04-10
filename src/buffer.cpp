@@ -64,7 +64,6 @@ namespace simpleVulkan
 
         void* mappedMemory = nullptr;
 
-        //map VertexMemory
         result = m_device.mapMemory(m_memory,0,m_size,vk::MemoryMapFlagBits(),&mappedMemory);
 
         //copy Vertexes
