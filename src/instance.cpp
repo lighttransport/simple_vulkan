@@ -1,5 +1,9 @@
 #include"instance.h"
 
+#ifndef VK_API_VERSION
+#define VK_API_VERSION VK_API_VERSION_1_0
+#endif
+
 namespace simpleVulkan
 {
     Instance::Instance(){}
@@ -21,7 +25,7 @@ namespace simpleVulkan
         appInfo.applicationVersion(applicationVersion);
         appInfo.pEngineName(engineName.c_str());
         appInfo.engineVersion(engineVersion);
-        appInfo.apiVersion(VK_API_VERSION_1_0);
+        appInfo.apiVersion(VK_API_VERSION);
        
         //std::vector<const char*> layers;
         //layers.push_back("VK_LAYER_LUNARG_param_checker");

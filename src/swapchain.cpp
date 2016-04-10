@@ -41,7 +41,7 @@ namespace simpleVulkan
         swapchainInfo.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
         swapchainInfo.presentMode(vk::PresentModeKHR::eFifoKHR);
         swapchainInfo.clipped(true);
-        swapchainInfo.oldSwapchain(nullptr);
+        swapchainInfo.oldSwapchain(vk::SwapchainKHR());
 
         //create Swapchain
         m_device.createSwapchainKHR(&swapchainInfo,nullptr,&m_swapchain);

@@ -1,7 +1,12 @@
 #include<vector>
 #include<string>
+#include<chrono>
 #include<GLFW/glfw3.h>
+
+#ifdef _WIN32
+#else
 #include<unistd.h>
+#endif
 
 namespace simpleVulkan
 {
@@ -11,7 +16,7 @@ namespace simpleVulkan
        uint32_t m_width = 400;
        uint32_t m_height = 400;
        GLFWwindow* m_window;
-       useconds_t m_interval = 100;
+       std::chrono::microseconds m_interval; 
 
    public:
        Application();
@@ -21,8 +26,8 @@ namespace simpleVulkan
        void destroy();
        bool run();
    protected:
-       useconds_t getInterval();
-       void setInterval(useconds_t interval);
+       std::chrono::microseconds getInterval();
+       void setInterval(std::chrono::microseconds interval);
        uint32_t getWidth();
        void setSize(uint32_t width,uint32_t height);
        uint32_t getHeight();

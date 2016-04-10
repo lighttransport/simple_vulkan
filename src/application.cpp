@@ -1,10 +1,11 @@
 #include"application.h"
 #include<vulkan/vk_cpp.h>
 #include<iostream>
+#include<thread>
 
 namespace simpleVulkan
 {
-    Application::Application(){}
+    Application::Application() : m_interval(100){}
     Application::~Application(){}
     bool Application::create(std::string windowName,uint32_t width,uint32_t height)
     {
@@ -43,16 +44,16 @@ namespace simpleVulkan
             {
                 return false;
             }
-            usleep(m_interval);
+            std::this_thread::sleep_for(m_interval);
         }
         return true;
     }
 
-    useconds_t Application::getInterval()
+    std::chrono::microseconds Application::getInterval()
     {
         return m_interval;
     }
-    void Application::setInterval(useconds_t interval)
+    void Application::setInterval(std::chrono::microseconds interval)
     {
         m_interval = interval;
     }
