@@ -1,5 +1,9 @@
 #include"instance.h"
 
+#ifndef VK_API_VERSION
+#define VK_API_VERSION VK_API_VERSION_1_0
+#endif
+
 namespace simpleVulkan
 {
     Instance::Instance(){}

@@ -48,6 +48,9 @@ solution "SimpleVulkanSolution"
       -- Linux specific
       configuration {"linux", "gmake"}
          defines { '__STDC_CONSTANT_MACROS', '__STDC_LIMIT_MACROS' } -- c99
+         links{"glfw3","vulkan","rt","m","dl","pthread","X11","Xrandr","Xinerama","Xxf86vm","Xcursor"}
+         buildoptions {"-std=c++11"}
+         linkoptions {"-std=c++11"}
 
 
       configuration "Debug"
