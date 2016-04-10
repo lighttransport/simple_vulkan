@@ -26,7 +26,7 @@ namespace simpleVulkan
         submitInfo.pCommandBuffers(cmdBuffers.data());
 
         //submit queue
-        result = m_queue.submit(1,&submitInfo,nullptr);
+        result = m_queue.submit(1,&submitInfo,vk::Fence());
         return result;
     }
     Result Queue::wait()
