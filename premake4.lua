@@ -29,21 +29,18 @@ solution "SimpleVulkanSolution"
       files { sources }
 
       includedirs {
-         "include/",
-         "deps/vulkan/include",
+         "include/"
       }
 
       -- Windows general
       configuration { "windows" }
-
+         defines { 'NOMINMAX', '_LARGEFILE_SOURCE', '_FILE_OFFSET_BITS=64' }
          includedirs { "./deps/GLFW3/windows/include" }
+         includedirs { "./deps/vulkan/include" }
          libdirs { "./deps/GLFW3/windows/lib" }
-
          libdirs { "./deps/vulkan/windows/lib" }
-
          links { "glfw3",  "vulkan-1" }
 
-         defines { 'NOMINMAX', '_LARGEFILE_SOURCE', '_FILE_OFFSET_BITS=64' }
 
       -- Linux specific
       configuration {"linux", "gmake"}
@@ -56,9 +53,11 @@ solution "SimpleVulkanSolution"
       configuration "Debug"
          defines { "DEBUG" } -- -DDEBUG
          flags { "Symbols" }
-         targetname "vulkan_test_debug"
+	 targetdir "bin/Debug"
+         targetname "vulkan_test"
 
       configuration "Release"
          defines { "NDEBUG" }
          flags { "Symbols", "Optimize" }
+	 targetdir "bin/Release"
          targetname "vulkan_test"

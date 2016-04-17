@@ -5,7 +5,7 @@
 
 namespace simpleVulkan
 {
-    Application::Application() : m_interval(100){}
+    Application::Application(){}
     Application::~Application(){}
     bool Application::create(std::string windowName,uint32_t width,uint32_t height)
     {
@@ -53,7 +53,7 @@ namespace simpleVulkan
     {
         return m_interval;
     }
-    void Application::setInterval(std::chrono::microseconds interval)
+    void Application::setInterval(std::chrono::milliseconds interval)
     {
         m_interval = interval;
     }

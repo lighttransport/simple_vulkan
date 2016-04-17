@@ -23,11 +23,11 @@ namespace simpleVulkan
         Swapchain();
         ~Swapchain();
 
-        Result create(
+		Result create(
+				vk::PhysicalDevice physicalDevice,
                 vk::Device device,
                 vk::SurfaceKHR& surface,
                 vk::ImageUsageFlags usage,
-                vk::Format format,
                 uint32_t width,
                 uint32_t height);
         void destroy();

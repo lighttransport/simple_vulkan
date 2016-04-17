@@ -15,7 +15,7 @@ namespace simpleVulkan
         Buffer();
         ~Buffer();
 
-        Result create(vk::Device device,vk::BufferUsageFlags usage,size_t size);
+        Result create(vk::PhysicalDevice physicalDevice,vk::Device device,vk::BufferUsageFlags usage,size_t size);
         void destroy();
         void write(const void* pData);
 

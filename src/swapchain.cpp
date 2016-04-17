@@ -9,42 +9,100 @@ namespace simpleVulkan
     {
     }
     Result Swapchain::create(
+			vk::PhysicalDevice physicalDevice,
             vk::Device device,
             vk::SurfaceKHR& surface,
             vk::ImageUsageFlags usage,
-            vk::Format format,
             uint32_t width,
             uint32_t height)
     {
         m_device = device;
-        m_format = format;
         m_usage = usage;
         m_width = width;
         m_height = height;
 
+		vk::SurfaceTransformFlagBitsKHR transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
+		vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+
         vk::Result result;
+
+		//get SurfaceFormats
+		uint32_t surfaceFormatsCount;
+		result = physicalDevice.getSurfaceFormatsKHR(surface, &surfaceFormatsCount, nullptr);
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+		std::vector<vk::SurfaceFormatKHR> surfaceFormats(surfaceFormatsCount);
+		result = physicalDevice.getSurfaceFormatsKHR(surface, &surfaceFormatsCount, surfaceFormats.data());
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+
+		m_format = surfaceFormats[0].format();
+
+		//get SurfacePresentModes
+		uint32_t surfacePresentModesCount;
+		result = physicalDevice.getSurfacePresentModesKHR(surface, &surfacePresentModesCount, nullptr);
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+		std::vector<vk::PresentModeKHR> surfacePresentModes(surfacePresentModesCount);
+		result = physicalDevice.getSurfacePresentModesKHR(surface, &surfacePresentModesCount, surfacePresentModes.data());
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+
+		//get SurfaceCapablilies
+		vk::SurfaceCapabilitiesKHR surfaceCapabilities;
+		result = physicalDevice.getSurfaceCapabilitiesKHR(surface, &surfaceCapabilities);
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+
+		if (!(surfaceCapabilities.supportedUsageFlags() & usage))
+		{
+			return vk::Result::eErrorInitializationFailed;
+		}
+		if (!(surfaceCapabilities.supportedTransforms() & transform))
+		{
+			return vk::Result::eErrorInitializationFailed;
+		}
+		if (!(surfaceCapabilities.supportedCompositeAlpha() & compositeAlpha))
+		{
+			return vk::Result::eErrorInitializationFailed;
+		}
+
 
         //init SwapchainCreateInfo
         vk::SwapchainCreateInfoKHR swapchainInfo;
         swapchainInfo.flags(vk::SwapchainCreateFlagBitsKHR{});
         swapchainInfo.surface(surface);
-        swapchainInfo.minImageCount(1); //3 //debug
-        swapchainInfo.imageFormat(format);
-        swapchainInfo.imageColorSpace(vk::ColorSpaceKHR::eVkColorspaceSrgbNonlinearKHR);
+        swapchainInfo.minImageCount(surfaceCapabilities.minImageCount());
+        swapchainInfo.imageFormat(surfaceFormats[0].format());
+        swapchainInfo.imageColorSpace(surfaceFormats[0].colorSpace());
         swapchainInfo.imageExtent(vk::Extent2D(width,height));
         swapchainInfo.imageArrayLayers(1);
         swapchainInfo.imageUsage(m_usage);
         swapchainInfo.imageSharingMode(vk::SharingMode::eExclusive);
         swapchainInfo.queueFamilyIndexCount(0);
         swapchainInfo.pQueueFamilyIndices(nullptr);
-        swapchainInfo.preTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
-        swapchainInfo.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-        swapchainInfo.presentMode(vk::PresentModeKHR::eFifoKHR);
+        swapchainInfo.preTransform(transform);
+        swapchainInfo.compositeAlpha(compositeAlpha);
+        swapchainInfo.presentMode(surfacePresentModes[0]);
         swapchainInfo.clipped(true);
         swapchainInfo.oldSwapchain(vk::SwapchainKHR());
 
         //create Swapchain
-        m_device.createSwapchainKHR(&swapchainInfo,nullptr,&m_swapchain);
+        result = m_device.createSwapchainKHR(&swapchainInfo,nullptr,&m_swapchain);
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
 
         //get SwapchainImages
         uint32_t swapchainCount;
@@ -54,7 +112,11 @@ namespace simpleVulkan
             return result;
         }
         m_images.resize(swapchainCount);
-        m_device.getSwapchainImagesKHR(m_swapchain,&swapchainCount,m_images.data());
+        result = m_device.getSwapchainImagesKHR(m_swapchain,&swapchainCount,m_images.data());
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
 
         //create SwapchainImageViews
         m_imageViews.resize(swapchainCount);

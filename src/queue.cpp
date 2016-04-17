@@ -12,18 +12,19 @@ namespace simpleVulkan
         m_device = device;
         m_device.getQueue(0,0,&m_queue);
     }
-    Result Queue::submit(const std::vector<vk::CommandBuffer>& cmdBuffers)
+    Result Queue::submit(vk::CommandBuffer cmdBuffer)
     {
+		vk::PipelineStageFlags stage = vk::PipelineStageFlagBits::eBottomOfPipe;
         vk::Result result;
         //init SubmitInfo
         vk::SubmitInfo submitInfo;
         submitInfo.waitSemaphoreCount(0);
         submitInfo.pWaitSemaphores(nullptr);
-        submitInfo.pWaitDstStageMask(nullptr);
         submitInfo.signalSemaphoreCount(0);
         submitInfo.pSignalSemaphores(nullptr);
-        submitInfo.commandBufferCount(cmdBuffers.size());
-        submitInfo.pCommandBuffers(cmdBuffers.data());
+        submitInfo.pWaitDstStageMask(&stage);
+        submitInfo.commandBufferCount(1);
+        submitInfo.pCommandBuffers(&cmdBuffer);
 
         //submit queue
         result = m_queue.submit(1,&submitInfo,vk::Fence());

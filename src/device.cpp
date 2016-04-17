@@ -13,8 +13,11 @@ namespace simpleVulkan
         //get PhysicalDevices
         uint32_t physDevicesNum;
         result = instance.enumeratePhysicalDevices(&physDevicesNum,nullptr);
-        std::vector<vk::PhysicalDevice> physDevices;
-        physDevices.resize(physDevicesNum);
+        if(result != vk::Result::eSuccess)
+        {
+            return result;
+        }
+        std::vector<vk::PhysicalDevice> physDevices(physDevicesNum);
         result = instance.enumeratePhysicalDevices(
                 &physDevicesNum,
                 physDevices.data());
@@ -22,10 +25,27 @@ namespace simpleVulkan
         {
             return result;
         }
+		m_physicalDevice = physDevices[0];
+
+		//get QueueFamilyProperties
+		uint32_t queueFamilyPropertiesCount;
+		m_physicalDevice.getQueueFamilyProperties(&queueFamilyPropertiesCount, nullptr);
+		std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertiesCount);
+		m_physicalDevice.getQueueFamilyProperties(&queueFamilyPropertiesCount, queueFamilyProperties.data());
+
+		uint32_t familyIndex;
+		for (int i =0; i < queueFamilyProperties.size(); ++i)
+		{
+			if (queueFamilyProperties[i].queueFlags() & vk::QueueFlagBits::eGraphics)
+			{
+				familyIndex = i;
+				break;
+			}
+		}
         //init DeviceQueueInfo
         vk::DeviceQueueCreateInfo queueInfo;
         float queueProperties {0.0f};
-        queueInfo.queueFamilyIndex(0);
+        queueInfo.queueFamilyIndex(familyIndex);
         queueInfo.queueCount(1);
         queueInfo.pQueuePriorities(&queueProperties);
 
@@ -35,7 +55,7 @@ namespace simpleVulkan
         deviceInfo.pQueueCreateInfos(&queueInfo);
 
         //create Device
-        result =  physDevices[0].createDevice(&deviceInfo,nullptr,&m_device);
+        result = m_physicalDevice.createDevice(&deviceInfo,nullptr,&m_device);
         return result;
     }
 
@@ -44,7 +64,11 @@ namespace simpleVulkan
         m_device.destroy(nullptr);
     }
 
-    vk::Device& Device::getVkDevice()
+	vk::PhysicalDevice& Device::getVkPhysicalDevice()
+	{
+		return m_physicalDevice;
+	}
+	vk::Device& Device::getVkDevice()
     {
         return m_device;
     }

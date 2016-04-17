@@ -11,7 +11,7 @@ namespace simpleVulkan
        uint32_t m_width = 400;
        uint32_t m_height = 400;
        GLFWwindow* m_window;
-       std::chrono::microseconds m_interval; 
+       std::chrono::milliseconds m_interval; 
 
    public:
        Application();
@@ -22,7 +22,7 @@ namespace simpleVulkan
        bool run();
    protected:
        std::chrono::microseconds getInterval();
-       void setInterval(std::chrono::microseconds interval);
+       void setInterval(std::chrono::milliseconds interval);
        uint32_t getWidth();
        void setSize(uint32_t width,uint32_t height);
        uint32_t getHeight();
