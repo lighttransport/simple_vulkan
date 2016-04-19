@@ -14,6 +14,14 @@ SimpleVulkan is simple vulkan framework.
 * [ ] MacOSX
 * [ ] Windows(Visual Studio)
 
+## Build
+
+### Windows
+
+Visual Studio 2013 is required to build.
+
+    $ ./tools/win/premake5.exe vs2013
+
 ## License
 
 `SimpleVulkan` is licensed under MIT license
