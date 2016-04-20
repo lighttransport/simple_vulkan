@@ -35,6 +35,7 @@ solution "SimpleVulkanSolution"
       -- Windows general
       configuration { "windows" }
          defines { 'NOMINMAX', '_LARGEFILE_SOURCE', '_FILE_OFFSET_BITS=64' }
+         defines { 'VKCPP_ENHANCED_MODE' }
          includedirs { "./deps/GLFW3/windows/include" }
          includedirs { "./deps/vulkan/include" }
          libdirs { "./deps/GLFW3/windows/lib" }

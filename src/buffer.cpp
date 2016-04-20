@@ -69,8 +69,12 @@ namespace simpleVulkan
         }
 
         //bind VertexMemory to VertexBuffer
+#ifdef VKCPP_ENHANCED_MODE
+        m_device.bindBufferMemory(m_buffer,m_memory,0);
+#else
         result = m_device.bindBufferMemory(m_buffer,m_memory,0);
-        return result;
+#endif
+		return result;
     }
 
     void Buffer::destroy()
@@ -85,8 +89,11 @@ namespace simpleVulkan
 
         void* mappedMemory = nullptr;
 
-        result = m_device.mapMemory(m_memory,0,m_size,vk::MemoryMapFlagBits(),&mappedMemory);
-
+#ifdef VKCPP_ENHANCED_MODE
+		mappedMemory = m_device.mapMemory(m_memory,0,m_size,vk::MemoryMapFlagBits());
+#else
+		result = m_device.mapMemory(m_memory,0,m_size,vk::MemoryMapFlagBits(),&mappedMemory);
+#endif
         //copy Vertexes
         memcpy(mappedMemory,pData,m_size);
 

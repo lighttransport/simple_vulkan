@@ -32,9 +32,14 @@ namespace simpleVulkan
     }
     Result Queue::wait()
     {
-        vk::Result result;
-        result = m_queue.waitIdle();
+#ifdef VKCPP_ENHANCED_MODE
+		m_queue.waitIdle();
+		return Result::eSuccess;
+#else
+		vk::Result result;
+		result = m_queue.waitIdle();
         return result;
+#endif
     }
     Result Queue::present(vk::SwapchainKHR swapchain,uint32_t index)
     {

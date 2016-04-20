@@ -2,6 +2,8 @@
 
 #include<vector>
 
+#define ENABLE_VALIDATION	(1)
+
 namespace simpleVulkan
 {
     Device::Device(){}
@@ -11,7 +13,7 @@ namespace simpleVulkan
     {
         vk::Result result;
         //get PhysicalDevices
-        uint32_t physDevicesNum;
+        uint32_t physDevicesNum = 0;
         result = instance.enumeratePhysicalDevices(&physDevicesNum,nullptr);
         if(result != vk::Result::eSuccess)
         {
@@ -53,6 +55,13 @@ namespace simpleVulkan
         vk::DeviceCreateInfo deviceInfo;
         deviceInfo.queueCreateInfoCount(1);
         deviceInfo.pQueueCreateInfos(&queueInfo);
+
+#if ENABLE_VALIDATION
+		std::vector<const char*> layers;
+		layers.push_back("VK_LAYER_LUNARG_standard_validation");
+		deviceInfo.enabledLayerCount(layers.size());
+		deviceInfo.ppEnabledLayerNames(layers.data());
+#endif
 
         //create Device
         result = m_physicalDevice.createDevice(&deviceInfo,nullptr,&m_device);

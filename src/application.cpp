@@ -3,6 +3,8 @@
 #include<iostream>
 #include<thread>
 
+#define ENABLE_VALIDATION	(1)
+
 namespace simpleVulkan
 {
     Application::Application(){}
@@ -25,6 +27,10 @@ namespace simpleVulkan
         {
             extensions[i]=glfwExtensions[i];
         }
+#if ENABLE_VALIDATION
+		extensions.push_back("VK_EXT_debug_report");
+#endif
+
         return initialize(extensions,m_window);
     }
 

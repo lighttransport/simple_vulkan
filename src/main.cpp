@@ -8,12 +8,30 @@
 #include<GLFW/glfw3.h>
 #include"simple_vulkan.h"
 
+#define ENABLE_VALIDATION	(1)
+
+#if ENABLE_VALIDATION
+VKAPI_ATTR VkBool32 VKAPI_CALL MyDebugReportCallback(
+    VkDebugReportFlagsEXT       flags,
+    VkDebugReportObjectTypeEXT  objectType,
+    uint64_t                    object,
+    size_t                      location,
+    int32_t                     messageCode,
+    const char*                 pLayerPrefix,
+    const char*                 pMessage,
+    void*                       pUserData)
+{
+    std::cerr << pMessage << std::endl;
+    return VK_FALSE;
+}
+#endif
+
 class TestApplication : public simpleVulkan::Application
 {
 	vk::Format m_colorFormat;
 	vk::Format m_depthFormat = vk::Format::eD24UnormS8Uint;
 
-	float m_vertexes[3][2] = { {0.0f,1.0f},{0.86f,-0.5f},{-0.86f,-0.5f} };
+	float m_vertexes[3][2];
 	float m_matrix[2][4];
 
 	//= {
@@ -56,12 +74,67 @@ private:
 		const std::vector<const char*>& glfwExtensions,
 		GLFWwindow* window) override
 	{
+
+		m_vertexes[0][0] =  0.0f;
+		m_vertexes[0][1] =  1.0f;
+		m_vertexes[1][0] =  0.86f;
+		m_vertexes[1][1] = -0.5f;
+		m_vertexes[2][0] = -0.86f;
+		m_vertexes[2][1] = -0.5f;
+
+
 		setInterval(std::chrono::milliseconds(10));
 		vk::Result result;
 
 		std::vector<const char*> layers;
+#if ENABLE_VALIDATION
+		layers.push_back("VK_LAYER_LUNARG_standard_validation");
+#endif
+
 		m_instance = new simpleVulkan::Instance();
-		m_instance->create("testApp", 1, "testEngine", 1, glfwExtensions, layers);
+		vk::Result ret = m_instance->create("testApp", 1, "testEngine", 1, glfwExtensions, layers);
+		if (ret != vk::Result::eSuccess) {
+			std::cerr << "failed to create instance!" << std::endl;
+			exit(-1);
+		}
+
+#if ENABLE_VALIDATION
+		vk::DebugReportCallbackCreateInfoEXT callbackInfo(
+			vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eDebug,
+			MyDebugReportCallback, nullptr);
+
+		{
+			VkInstance instance = (m_instance->getVkInstance());
+			/* Load VK_EXT_debug_report entry points in debug builds */
+			PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
+				reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>
+					(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+			PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT =
+				reinterpret_cast<PFN_vkDebugReportMessageEXT>
+					(vkGetInstanceProcAddr(instance, "vkDebugReportMessageEXT"));
+			PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
+				reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>
+					(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
+
+			    /* Setup callback creation information */
+			VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
+			callbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+			callbackCreateInfo.pNext       = nullptr;
+			callbackCreateInfo.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT |
+											 VK_DEBUG_REPORT_WARNING_BIT_EXT |
+											 VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			callbackCreateInfo.pfnCallback = &MyDebugReportCallback;
+			callbackCreateInfo.pUserData   = nullptr;
+
+			/* Register the callback */
+			VkDebugReportCallbackEXT callback;
+			VkResult result = vkCreateDebugReportCallbackEXT(instance, &callbackCreateInfo, nullptr, &callback);
+			if (result != VK_SUCCESS) {
+				std::cerr << "failed to create debug report callback!" << std::endl;
+				exit(-1);
+			}
+		}
+#endif
 
 		m_device = new simpleVulkan::Device();
 		m_device->create(m_instance->getVkInstance());
@@ -170,8 +243,11 @@ private:
 		}
 
 		//end CommandBuffer
+#ifdef VKCPP_ENHANCED_MODE
+		m_cmdBuf->getVkCommandBuffer(0).end();
+#else
 		result = m_cmdBuf->getVkCommandBuffer(0).end();
-
+#endif
 		//init SubmitInfo
 		m_queue->submit(m_cmdBuf->getVkCommandBuffer(0));
 
