@@ -11,13 +11,14 @@ namespace simpleVulkan
        uint32_t m_width = 400;
        uint32_t m_height = 400;
        GLFWwindow* m_window;
-       std::chrono::milliseconds m_interval; 
+       std::chrono::milliseconds m_interval;
+	   bool m_validate; // Enable Vulkan validation layer + debug report?
 
    public:
        Application();
        virtual ~Application();
 
-       bool create(std::string windowName,uint32_t width,uint32_t height);
+       bool create(std::string windowName,uint32_t width,uint32_t height, bool validate = false);
        void destroy();
        bool run();
    protected:
@@ -26,7 +27,9 @@ namespace simpleVulkan
        uint32_t getWidth();
        void setSize(uint32_t width,uint32_t height);
        uint32_t getHeight();
-       void setHeight(uint32_t height); 
+       void setHeight(uint32_t height);
+	   bool getValidateFlag();
+	   void setValidateFlag(bool validate);
        void closeWindow();
    private:
        virtual bool initialize(

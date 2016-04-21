@@ -87,9 +87,11 @@ private:
 		vk::Result result;
 
 		std::vector<const char*> layers;
-#if ENABLE_VALIDATION
-		layers.push_back("VK_LAYER_LUNARG_standard_validation");
-#endif
+
+		if (getValidateFlag())
+		{
+			layers.push_back("VK_LAYER_LUNARG_standard_validation");
+		}
 
 		m_instance = new simpleVulkan::Instance();
 		vk::Result ret = m_instance->create("testApp", 1, "testEngine", 1, glfwExtensions, layers);
@@ -98,46 +100,48 @@ private:
 			exit(-1);
 		}
 
-#if ENABLE_VALIDATION
-		vk::DebugReportCallbackCreateInfoEXT callbackInfo(
-			vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eDebug,
-			MyDebugReportCallback, nullptr);
-
+		if (getValidateFlag())
 		{
-			VkInstance instance = (m_instance->getVkInstance());
-			/* Load VK_EXT_debug_report entry points in debug builds */
-			PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-				reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>
-					(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
-			PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT =
-				reinterpret_cast<PFN_vkDebugReportMessageEXT>
-					(vkGetInstanceProcAddr(instance, "vkDebugReportMessageEXT"));
-			PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-				reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>
-					(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
+			vk::DebugReportCallbackCreateInfoEXT callbackInfo(
+				vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eDebug,
+				MyDebugReportCallback, nullptr);
 
-			    /* Setup callback creation information */
-			VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
-			callbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-			callbackCreateInfo.pNext       = nullptr;
-			callbackCreateInfo.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT |
-											 VK_DEBUG_REPORT_WARNING_BIT_EXT |
-											 VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-			callbackCreateInfo.pfnCallback = &MyDebugReportCallback;
-			callbackCreateInfo.pUserData   = nullptr;
+			// @todo { acquire proc address somewhewre, not here. }
+			{
+				VkInstance instance = (m_instance->getVkInstance());
+				/* Load VK_EXT_debug_report entry points in debug builds */
+				PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
+					reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>
+						(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+				PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT =
+					reinterpret_cast<PFN_vkDebugReportMessageEXT>
+						(vkGetInstanceProcAddr(instance, "vkDebugReportMessageEXT"));
+				PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
+					reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>
+						(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
 
-			/* Register the callback */
-			VkDebugReportCallbackEXT callback;
-			VkResult result = vkCreateDebugReportCallbackEXT(instance, &callbackCreateInfo, nullptr, &callback);
-			if (result != VK_SUCCESS) {
-				std::cerr << "failed to create debug report callback!" << std::endl;
-				exit(-1);
+					/* Setup callback creation information */
+				VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
+				callbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+				callbackCreateInfo.pNext       = nullptr;
+				callbackCreateInfo.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT |
+												 VK_DEBUG_REPORT_WARNING_BIT_EXT |
+												 VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+				callbackCreateInfo.pfnCallback = &MyDebugReportCallback;
+				callbackCreateInfo.pUserData   = nullptr;
+
+				/* Register the callback */
+				VkDebugReportCallbackEXT callback;
+				VkResult result = vkCreateDebugReportCallbackEXT(instance, &callbackCreateInfo, nullptr, &callback);
+				if (result != VK_SUCCESS) {
+					std::cerr << "failed to create debug report callback!" << std::endl;
+					exit(-1);
+				}
 			}
 		}
-#endif
 
 		m_device = new simpleVulkan::Device();
-		m_device->create(m_instance->getVkInstance());
+		m_device->create(m_instance->getVkInstance(), getValidateFlag());
 
 		m_queue = new simpleVulkan::Queue();
 		m_queue->init(m_device->getVkDevice());
@@ -541,10 +545,19 @@ private:
 };
 
 
-int main()
+int main(
+	int argc,
+	char **argv)
 {
+	bool validate = true; // Use vulkan validation layer + debug report?
+	if (argc > 1)
+	{
+		if (strcmp("-novalidate", argv[1]) == 0) {
+			validate = false;
+		}
+	}
 	simpleVulkan::Application* app = new TestApplication();
-	if (app->create("test", 400, 400))
+	if (app->create("test", 400, 400, validate))
 	{
 		app->run();
 		app->destroy();

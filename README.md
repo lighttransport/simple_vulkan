@@ -11,8 +11,7 @@ SimpleVulkan is simple vulkan framework.
 ## Supported platform
 
 * [x] Linux
-* [ ] MacOSX
-* [ ] Windows(Visual Studio)
+* [x] Windows(Visual Studio)
 
 ## Build
 
@@ -21,6 +20,12 @@ SimpleVulkan is simple vulkan framework.
 Visual Studio 2013 is required to build.
 
     $ ./tools/win/premake5.exe vs2013
+
+## Run
+
+    $ ./vulkan_test <options>
+
+In default, Vulkan validation layer + debug report is enabled. Disable validation layer with `-novalidate` argument.
 
 ## License
 

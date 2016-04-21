@@ -16,7 +16,7 @@ namespace simpleVulkan
        Device();
        ~Device();
 
-       Result create(vk::Instance instance);
+       Result create(vk::Instance instance, bool validate);
        void destroy();
 
 	   vk::PhysicalDevice& getVkPhysicalDevice();

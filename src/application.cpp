@@ -3,16 +3,16 @@
 #include<iostream>
 #include<thread>
 
-#define ENABLE_VALIDATION	(1)
-
 namespace simpleVulkan
 {
-    Application::Application(){}
+    Application::Application() : m_validate(false) {}
     Application::~Application(){}
-    bool Application::create(std::string windowName,uint32_t width,uint32_t height)
+    bool Application::create(std::string windowName,uint32_t width,uint32_t height, bool validate)
     {
         m_width = width;
         m_height = height;
+		m_validate = validate;
+
         glfwInit();
         if(!glfwVulkanSupported())
         {
@@ -27,9 +27,11 @@ namespace simpleVulkan
         {
             extensions[i]=glfwExtensions[i];
         }
-#if ENABLE_VALIDATION
-		extensions.push_back("VK_EXT_debug_report");
-#endif
+
+		if (m_validate)
+		{
+			extensions.push_back("VK_EXT_debug_report");
+		}
 
         return initialize(extensions,m_window);
     }
@@ -77,6 +79,14 @@ namespace simpleVulkan
         m_height = height;
         glfwSetWindowSize(m_window,m_width,m_height);
     }
+	bool Application::getValidateFlag()
+	{
+		return m_validate;
+	}
+	void Application::setValidateFlag(bool validate)
+	{
+		m_validate = validate;
+	}
     void Application::closeWindow()
     {
         glfwSetWindowShouldClose(m_window,0);
