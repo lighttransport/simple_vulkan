@@ -57,6 +57,7 @@ class TestApplication : public simpleVulkan::Application
 	simpleVulkan::Shader* m_fragmentShader;
 	simpleVulkan::GraphicsPipeline* m_pipeline;
 
+    VkSemaphore a;
 	vk::SurfaceKHR m_windowSurface;
 	vk::Semaphore m_semaphore;
 	vk::Viewport m_viewport;
@@ -144,10 +145,10 @@ private:
 		m_device->create(m_instance->getVkInstance(), getValidateFlag());
 
 		m_queue = new simpleVulkan::Queue();
-		m_queue->init(m_device->getVkDevice());
+		m_queue->init(m_device->getVkDevice(0));
 
 		m_cmdBuf = new simpleVulkan::CommandBuffers();
-		m_cmdBuf->create(m_device->getVkDevice(), 2);
+		m_cmdBuf->create(m_device->getVkDevice(0), 2);
 		{
 			//init CommandBufferInheritanceInfo
 			vk::CommandBufferInheritanceInfo cmdBufInheritanceInfo;
@@ -164,7 +165,7 @@ private:
 		glfwCreateWindowSurface(static_cast<VkInstance>(m_instance->getVkInstance()), window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&m_windowSurface));
 
 		m_swapchain = new simpleVulkan::Swapchain();
-		m_swapchain->create(m_device->getVkPhysicalDevice(), m_device->getVkDevice(), m_windowSurface, vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
+		m_swapchain->create(m_device->getVkPhysicalDevice(0), m_device->getVkDevice(0), m_windowSurface, vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
 		m_colorFormat = m_swapchain->getFormat();
 
 		for (int i = 0; i < m_swapchain->count(); ++i)
@@ -197,7 +198,7 @@ private:
 
 		m_depthImage = new simpleVulkan::Image();
 		m_depthImage->create(
-			m_device->getVkDevice(),
+			m_device->getVkDevice(0),
 			m_depthFormat,
 			vk::ImageUsageFlagBits::eDepthStencilAttachment,
 			getWidth(),
@@ -229,7 +230,7 @@ private:
 		//		&barrier);
 
 		m_renderPass = new simpleVulkan::RenderPass();
-		m_renderPass->create(m_device->getVkDevice(), m_colorFormat, m_depthFormat);
+		m_renderPass->create(m_device->getVkDevice(0), m_colorFormat, m_depthFormat);
 
 		{
 			m_FrameBuffers.resize(m_swapchain->count());
@@ -237,7 +238,7 @@ private:
 			{
 				m_FrameBuffers[i] = new simpleVulkan::Framebuffer();
 				m_FrameBuffers[i]->create(
-					m_device->getVkDevice(),
+					m_device->getVkDevice(0),
 					getWidth(),
 					getHeight(),
 					m_swapchain->getVkImageView(i),
@@ -266,7 +267,7 @@ private:
 		}
 
 		m_vertexShader = new simpleVulkan::Shader();
-		m_vertexShader->create(m_device->getVkDevice(), code.size(), code.data());
+		m_vertexShader->create(m_device->getVkDevice(0), code.size(), code.data());
 
 		//read FragShader
 		code.clear();
@@ -276,7 +277,7 @@ private:
 		}
 
 		m_fragmentShader = new simpleVulkan::Shader();
-		m_fragmentShader->create(m_device->getVkDevice(), code.size(), code.data());
+		m_fragmentShader->create(m_device->getVkDevice(0), code.size(), code.data());
 
 		std::vector<vk::VertexInputBindingDescription> vertexBindings(1);
 		std::vector<vk::VertexInputAttributeDescription> vertexAttributes(1);
@@ -294,14 +295,14 @@ private:
 
 		//create VertexBuffer
 		m_vertexBuffer = new simpleVulkan::Buffer();
-		m_vertexBuffer->create(m_device->getVkPhysicalDevice(), m_device->getVkDevice(), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
+		m_vertexBuffer->create(m_device->getVkPhysicalDevice(0), m_device->getVkDevice(0), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
 
 		//write VertexBuffer
 		m_vertexBuffer->write(reinterpret_cast<const void*>(m_vertexes));
 
 		//create FragmentBuffer
 		m_matrixBuffer = new simpleVulkan::Buffer();
-		m_matrixBuffer->create(m_device->getVkPhysicalDevice(), m_device->getVkDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
+		m_matrixBuffer->create(m_device->getVkPhysicalDevice(0), m_device->getVkDevice(0), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
 
 		//write FragmentBuffer
 		m_matrixBuffer->write(reinterpret_cast<const void*>(m_matrix));
@@ -315,7 +316,7 @@ private:
 		layoutBinding[0].descriptorCount(1);
 
 		m_descriptorSets = new simpleVulkan::DescriptorSets();
-		m_descriptorSets->create(m_device->getVkDevice(), layoutBinding, 1);
+		m_descriptorSets->create(m_device->getVkDevice(0), layoutBinding, 1);
 
 		//write DescriptorSet
 		{
@@ -336,7 +337,7 @@ private:
 			writeSet.pBufferInfo(&bufferInfo);
 
 			//update DescriptorSet
-			m_device->getVkDevice().updateDescriptorSets(1, &writeSet, 0, nullptr);
+			m_device->getVkDevice(0).updateDescriptorSets(1, &writeSet, 0, nullptr);
 		}
 
 		//init Viewport
@@ -355,7 +356,7 @@ private:
 
 		m_pipeline = new simpleVulkan::GraphicsPipeline();
 		m_pipeline->create(
-			m_device->getVkDevice(),
+			m_device->getVkDevice(0),
 			m_vertexShader->getVkShaderModule(),
 			m_fragmentShader->getVkShaderModule(),
 			m_descriptorSets->getVkDescriptorSetLayout(),
@@ -370,11 +371,36 @@ private:
 			semaphoreInfo.flags(vk::SemaphoreCreateFlagBits());
 
 			//create Semaphore
-			result = m_device->getVkDevice().createSemaphore(&semaphoreInfo, nullptr, &m_semaphore);
+			result = m_device->getVkDevice(0).createSemaphore(
+                    &semaphoreInfo,
+                    nullptr,
+                    &m_semaphore);
 		}
 
-		//acquire NextImage
-		result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(), 4000000, m_semaphore, vk::Fence(), &m_bufferIndex);
+		return true;
+
+	}
+	virtual void finalize() override
+	{
+	}
+
+	virtual bool render() override
+	{
+		vk::Result result;
+		float rate = 100 / (3.14f * 2.0f);
+		m_matrix[0][0] = std::cos(m_count / rate);
+		m_matrix[0][1] = std::sin(m_count / rate);
+		m_matrix[1][0] = -std::sin(m_count / rate);
+		m_matrix[1][1] = std::cos(m_count / rate);
+		m_matrixBuffer->write(reinterpret_cast<void*>(&m_matrix));
+
+		//acquire next Image
+		result = m_device->getVkDevice(0).acquireNextImageKHR(
+                m_swapchain->getVkSwapchainKHR(),
+                400000000, 
+                m_semaphore,
+                nullptr,
+                &m_bufferIndex);
 
 		{
 			//init CommandBufferInheritanceInfo
@@ -422,19 +448,18 @@ private:
 
 		}
 
-
 		{
 			//clear color
 			vk::ClearColorValue clearColor(std::array<float, 4>{0.0f, 1.0f, 0.0f, 1.0f});
 			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-			m_cmdBuf->getVkCommandBuffer(1).clearColorImage(m_swapchain->getVkImage(m_bufferIndex), vk::ImageLayout::eColorAttachmentOptimal, &clearColor, 1, &range);
+			m_cmdBuf->getVkCommandBuffer(1).clearColorImage(m_swapchain->getVkImage(m_bufferIndex), vk::ImageLayout::eGeneral, &clearColor, 1, &range);
 		}
 
 		{
 			//clear depth
 			vk::ClearDepthStencilValue clearDepth(1.0f, 0);
 			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1);
-			m_cmdBuf->getVkCommandBuffer(1).clearDepthStencilImage(m_depthImage->getVkImage(), vk::ImageLayout::eDepthStencilAttachmentOptimal, &clearDepth, 1, &range);
+			m_cmdBuf->getVkCommandBuffer(1).clearDepthStencilImage(m_depthImage->getVkImage(), vk::ImageLayout::eGeneral, &clearDepth, 1, &range);
 		}
 
 		{
@@ -509,36 +534,18 @@ private:
 		//end CommandBuffer
 		m_cmdBuf->getVkCommandBuffer(1).end();
 
-		return true;
-
-	}
-	virtual void finalize() override
-	{
-	}
-
-	virtual bool render() override
-	{
-		vk::Result result;
-		float rate = 100 / (3.14f * 2.0f);
-		m_matrix[0][0] = std::cos(m_count / rate);
-		m_matrix[0][1] = std::sin(m_count / rate);
-		m_matrix[1][0] = -std::sin(m_count / rate);
-		m_matrix[1][1] = std::cos(m_count / rate);
-		m_matrixBuffer->write(reinterpret_cast<void*>(&m_matrix));
-
-		m_queue->submit(m_cmdBuf->getVkCommandBuffer(1));
+		m_queue->submit(m_cmdBuf->getVkCommandBuffer(1),m_semaphore);
 
 		//wait Queue
 		m_queue->wait();
 
 		m_queue->present(m_swapchain->getVkSwapchainKHR(), m_bufferIndex);
 
-
 		//wait Device
-		m_device->getVkDevice().waitIdle();
-		//acquire next Image
-		result = m_device->getVkDevice().acquireNextImageKHR(m_swapchain->getVkSwapchainKHR(), 4000000, m_semaphore, vk::Fence(), &m_bufferIndex);
-		std::cout << m_bufferIndex << ':' << glfwGetTime() << std::endl;
+		m_device->getVkDevice(0).waitIdle();
+
+		std::cout << "BufferIndex:" << m_bufferIndex << std::endl;
+        std::cout << "Time:" << glfwGetTime() << std::endl;
 		++m_count;
 		return true;
 	}

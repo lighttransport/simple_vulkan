@@ -17,6 +17,7 @@ namespace simpleVulkan
 
        void init(vk::Device deivce);
        Result submit(vk::CommandBuffer cmdBuffer);
+       Result submit(vk::CommandBuffer cmdBuffer,vk::Semaphore semaphore);
        Result wait();
        Result present(vk::SwapchainKHR swapchain,uint32_t index);
 
