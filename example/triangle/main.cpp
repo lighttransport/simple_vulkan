@@ -10,23 +10,6 @@
 #include<GLFW/glfw3.h>
 #include"simple_vulkan.h"
 
-#define ENABLE_VALIDATION	(1)
-
-#if ENABLE_VALIDATION
-VKAPI_ATTR VkBool32 VKAPI_CALL MyDebugReportCallback(
-    VkDebugReportFlagsEXT       flags,
-    VkDebugReportObjectTypeEXT  objectType,
-    uint64_t                    object,
-    size_t                      location,
-    int32_t                     messageCode,
-    const char*                 pLayerPrefix,
-    const char*                 pMessage,
-    void*                       pUserData)
-{
-    std::cerr << pMessage << std::endl;
-    return VK_FALSE;
-}
-#endif
 
 class TestApplication : public simpleVulkan::Application
 {
@@ -35,11 +18,6 @@ class TestApplication : public simpleVulkan::Application
 
 	float m_vertexes[3][2];
 	float m_matrix[2][4];
-
-	//= {
-	//    {1.0f,0.0f,0.0f,0.0f},
-	//    {0.0f,1.0f,0.0f,0.0f}
-	//};
 
 	const std::string m_vertexShaderName = "./vert.spv";
 	const std::string m_fragShaderName = "./frag.spv";
@@ -59,7 +37,6 @@ class TestApplication : public simpleVulkan::Application
 	simpleVulkan::Shader* m_fragmentShader;
 	simpleVulkan::GraphicsPipeline* m_pipeline;
 
-    VkSemaphore a;
 	vk::SurfaceKHR m_windowSurface;
 	vk::Semaphore m_semaphore;
 	vk::Viewport m_viewport;
@@ -73,9 +50,7 @@ public:
 	using simpleVulkan::Application::Application;
 private:
 
-	virtual bool initialize(
-		const std::vector<const char*>& glfwExtensions,
-		GLFWwindow* window) override
+	virtual bool initialize()
 	{
 
 		m_vertexes[0][0] =  0.0f;
@@ -85,63 +60,9 @@ private:
 		m_vertexes[2][0] = -0.86f;
 		m_vertexes[2][1] = -0.5f;
 
-
 		setInterval(std::chrono::milliseconds(10));
 		vk::Result result;
-
-		std::vector<const char*> layers;
-
-		if (getValidateFlag())
-		{
-			layers.push_back("VK_LAYER_LUNARG_standard_validation");
-		}
-
-		m_instance = new simpleVulkan::Instance();
-		vk::Result ret = m_instance->create("testApp", 1, "testEngine", 1, glfwExtensions, layers);
-		if (ret != vk::Result::eSuccess) {
-			std::cerr << "failed to create instance!" << std::endl;
-			exit(-1);
-		}
-
-		if (getValidateFlag())
-		{
-			vk::DebugReportCallbackCreateInfoEXT callbackInfo(
-				vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eDebug,
-				MyDebugReportCallback, nullptr);
-
-			// @todo { acquire proc address somewhewre, not here. }
-			{
-				VkInstance instance = (m_instance->getVkInstance());
-				/* Load VK_EXT_debug_report entry points in debug builds */
-				PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-					reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>
-						(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
-				PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT =
-					reinterpret_cast<PFN_vkDebugReportMessageEXT>
-						(vkGetInstanceProcAddr(instance, "vkDebugReportMessageEXT"));
-				PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-					reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>
-						(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
-
-					/* Setup callback creation information */
-				VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
-				callbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-				callbackCreateInfo.pNext       = nullptr;
-				callbackCreateInfo.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT |
-												 VK_DEBUG_REPORT_WARNING_BIT_EXT |
-												 VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-				callbackCreateInfo.pfnCallback = &MyDebugReportCallback;
-				callbackCreateInfo.pUserData   = nullptr;
-
-				/* Register the callback */
-				VkDebugReportCallbackEXT callback;
-				VkResult result = vkCreateDebugReportCallbackEXT(instance, &callbackCreateInfo, nullptr, &callback);
-				if (result != VK_SUCCESS) {
-					std::cerr << "failed to create debug report callback!" << std::endl;
-					exit(-1);
-				}
-			}
-		}
+        m_instance = getInstance();
 
 		m_device = new simpleVulkan::Devices();
 		m_device->create(m_instance->getVkInstance(), getValidateFlag());
@@ -164,7 +85,7 @@ private:
 		}
 
 		//get WindowSurface
-		glfwCreateWindowSurface(static_cast<VkInstance>(m_instance->getVkInstance()), window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&m_windowSurface));
+		glfwCreateWindowSurface(static_cast<VkInstance>(m_instance->getVkInstance()), getWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&m_windowSurface));
 
 		m_swapchain = new simpleVulkan::Swapchain();
 		m_swapchain->create(m_device->getVkPhysicalDevice(0), m_device->getVkDevice(0), m_windowSurface, vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
