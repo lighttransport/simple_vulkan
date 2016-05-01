@@ -4,10 +4,10 @@
 
 namespace simpleVulkan
 {
-    Device::Device(){}
-    Device::~Device(){}
+    Devices::Devices(){}
+    Devices::~Devices(){}
    
-    Result Device::create(vk::Instance instance, bool validate)
+    Result Devices::create(vk::Instance instance, bool validate)
     {
         vk::Result result;
         //get PhysicalDevices
@@ -81,7 +81,7 @@ namespace simpleVulkan
         return result;
     }
 
-    void Device::destroy()
+    void Devices::destroy()
     {
         for(vk::Device& device:m_devices)
         {
@@ -89,11 +89,11 @@ namespace simpleVulkan
         }
     }
 
-	vk::PhysicalDevice& Device::getVkPhysicalDevice(size_t index)
+	vk::PhysicalDevice& Devices::getVkPhysicalDevice(size_t index)
 	{
 		return m_physicalDevices[index];
 	}
-	vk::Device& Device::getVkDevice(size_t index)
+	vk::Device& Devices::getVkDevice(size_t index)
     {
         return m_devices[index];
     }

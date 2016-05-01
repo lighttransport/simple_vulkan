@@ -1,7 +1,9 @@
 #include<cmath>
 #include<array>
 #include<vector>
+#include<thread>
 #include<iostream>
+#include<thread>
 #include<string>
 #include<vulkan/vk_cpp.h>
 #include<vulkan/vulkan.h>
@@ -43,7 +45,7 @@ class TestApplication : public simpleVulkan::Application
 	const std::string m_fragShaderName = "./frag.spv";
 
 	simpleVulkan::Instance* m_instance;
-	simpleVulkan::Device* m_device;
+	simpleVulkan::Devices* m_device;
 	simpleVulkan::Queue* m_queue;
 	simpleVulkan::CommandBuffers* m_cmdBuf;
 	simpleVulkan::Swapchain* m_swapchain;
@@ -141,7 +143,7 @@ private:
 			}
 		}
 
-		m_device = new simpleVulkan::Device();
+		m_device = new simpleVulkan::Devices();
 		m_device->create(m_instance->getVkInstance(), getValidateFlag());
 
 		m_queue = new simpleVulkan::Queue();

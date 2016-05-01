@@ -5,3 +5,5 @@
 !.gitignore
 Makefile
 *.make
+*.sln
+*.vcproj
