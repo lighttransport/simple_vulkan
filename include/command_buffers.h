@@ -19,6 +19,9 @@ namespace simpleVulkan
        Result create(vk::Device device,size_t count);
        void destroy();
 
+	   Result begin(size_t index);
+	   Result end(size_t index);
+
        vk::CommandPool& getVkCommandPool();
        vk::CommandBuffer& getVkCommandBuffer(size_t index);
        const std::vector<vk::CommandBuffer>& getVkCommandBuffers();

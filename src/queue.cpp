@@ -13,35 +13,19 @@ namespace simpleVulkan
         m_device.getQueue(0,0,&m_queue);
     }
 
-    Result Queue::submit(vk::CommandBuffer cmdBuffer)
+    Result Queue::submit(
+		vk::CommandBuffer cmdBuffer, 
+		const std::vector<vk::Semaphore>& waitSemaphores, 
+		const std::vector<vk::Semaphore>& signalSemaphores)
     {
 		vk::PipelineStageFlags stage = vk::PipelineStageFlagBits::eBottomOfPipe;
         vk::Result result;
         //init SubmitInfo
         vk::SubmitInfo submitInfo;
-        submitInfo.waitSemaphoreCount(0);
-        submitInfo.pWaitSemaphores(nullptr);
-        submitInfo.signalSemaphoreCount(0);
-        submitInfo.pSignalSemaphores(nullptr);
-        submitInfo.pWaitDstStageMask(&stage);
-        submitInfo.commandBufferCount(1);
-        submitInfo.pCommandBuffers(&cmdBuffer);
-
-        //submit queue
-        result = m_queue.submit(1,&submitInfo,vk::Fence());
-        return result;
-    }
-
-    Result Queue::submit(vk::CommandBuffer cmdBuffer,vk::Semaphore semaphore)
-    {
-		vk::PipelineStageFlags stage = vk::PipelineStageFlagBits::eBottomOfPipe;
-        vk::Result result;
-        //init SubmitInfo
-        vk::SubmitInfo submitInfo;
-        submitInfo.waitSemaphoreCount(1);
-        submitInfo.pWaitSemaphores(&semaphore);
-        submitInfo.signalSemaphoreCount(0);
-        submitInfo.pSignalSemaphores(nullptr);
+        submitInfo.waitSemaphoreCount(waitSemaphores.size());
+		submitInfo.pWaitSemaphores(waitSemaphores.data());
+        submitInfo.signalSemaphoreCount(signalSemaphores.size());
+        submitInfo.pSignalSemaphores(signalSemaphores.data());
         submitInfo.pWaitDstStageMask(&stage);
         submitInfo.commandBufferCount(1);
         submitInfo.pCommandBuffers(&cmdBuffer);

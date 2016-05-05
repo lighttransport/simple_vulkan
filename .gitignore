@@ -6,4 +6,7 @@
 Makefile
 *.make
 *.sln
-*.vcproj
+*.vcproj*
+*.vcxproj*
+*.spv
+*.db

@@ -36,11 +36,16 @@ class TriangleApplication : public simpleVulkan::Application
 	simpleVulkan::Shader m_vertexShader;
 	simpleVulkan::Shader m_fragmentShader;
 	simpleVulkan::GraphicsPipeline m_pipeline;
+	simpleVulkan::GraphicsPipeline m_pipeline2;
 
 	vk::SurfaceKHR m_windowSurface;
 	vk::Semaphore m_semaphore;
+	std::vector<vk::VertexInputBindingDescription> m_vertexBindings;
+	std::vector<vk::VertexInputAttributeDescription> m_vertexAttributes;
 	vk::Viewport m_viewport;
+	vk::Viewport m_viewport2;
 	vk::Rect2D m_scissor;
+	vk::Rect2D m_scissor2;
 
 
 	uint32_t m_bufferIndex;
@@ -50,8 +55,10 @@ public:
 	using simpleVulkan::Application::Application;
 private:
 
-	void initImages()
+	void initFramebuffer()
 	{
+
+		m_cmdBuf.begin(0);
 
 		m_swapchain.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), m_instance.getSurface(), vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
 		m_colorFormat = m_swapchain.getFormat();
@@ -116,34 +123,15 @@ private:
 			nullptr,
 			1,
 			&barrier);
-	}
 
-	virtual bool initialize()
-	{
-
-		m_vertexes[0][0] =  0.0f;
-		m_vertexes[0][1] =  1.0f;
-		m_vertexes[1][0] =  0.86f;
-		m_vertexes[1][1] = -0.5f;
-		m_vertexes[2][0] = -0.86f;
-		m_vertexes[2][1] = -0.5f;
-
-		setInterval(std::chrono::milliseconds(10));
-		vk::Result result;
-
-		m_instance = getInstance();
-		
-		m_devices.create(m_instance.getVkInstance(), getValidateFlag());
-
-		m_queue.init(m_devices.getVkDevice(0));
-
-		m_cmdBuf.create(m_devices.getVkDevice(0),2);
-		
-		m_cmdBuf.begin(0);
-
-		initImages();
 
 		m_cmdBuf.end(0);
+
+		//init SubmitInfo
+		m_queue.submit(m_cmdBuf.getVkCommandBuffer(0));
+
+		//wait queue
+		m_queue.wait();
 
 		m_renderPass.create(m_devices.getVkDevice(0), m_colorFormat, m_depthFormat);
 
@@ -161,13 +149,10 @@ private:
 			}
 		}
 
+	}
 
-		//init SubmitInfo
-		m_queue.submit(m_cmdBuf.getVkCommandBuffer(0));
-
-		//wait queue
-		m_queue.wait();
-
+	void initShader()
+	{
 		//read VertexShader
 		std::vector<uint8_t> code(0);
 		if (!readBinaryFile(m_vertexShaderName, code))
@@ -185,20 +170,23 @@ private:
 		}
 
 		m_fragmentShader.create(m_devices.getVkDevice(0), code.size(), code.data());
+	}
 
-		std::vector<vk::VertexInputBindingDescription> vertexBindings(1);
-		std::vector<vk::VertexInputAttributeDescription> vertexAttributes(1);
+	void initBuffer()
+	{
 
+		m_vertexBindings.resize(1);
 		//init VertexBinding
-		vertexBindings[0].binding(0);
-		vertexBindings[0].inputRate(vk::VertexInputRate::eVertex);
-		vertexBindings[0].stride(sizeof(float) * 2);
+		m_vertexBindings[0].binding(0);
+		m_vertexBindings[0].inputRate(vk::VertexInputRate::eVertex);
+		m_vertexBindings[0].stride(sizeof(float) * 2);
 
+		m_vertexAttributes.resize(1);
 		//init VertexAttributes
-		vertexAttributes[0].binding(0);
-		vertexAttributes[0].location(0);
-		vertexAttributes[0].format(vk::Format::eR32G32Sfloat);
-		vertexAttributes[0].offset(0);
+		m_vertexAttributes[0].binding(0);
+		m_vertexAttributes[0].location(0);
+		m_vertexAttributes[0].format(vk::Format::eR32G32Sfloat);
+		m_vertexAttributes[0].offset(0);
 
 		//create VertexBuffer
 		m_vertexBuffer.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
@@ -212,6 +200,10 @@ private:
 		//write FragmentBuffer
 		m_matrixBuffer.write(reinterpret_cast<const void*>(m_matrix));
 
+	}
+
+	void initDescriptor()
+	{
 		//init DescriptorSetLayoutBinding
 		std::vector<vk::DescriptorSetLayoutBinding> layoutBinding(1);
 		layoutBinding[0].binding(0);
@@ -244,30 +236,95 @@ private:
 			m_devices.getVkDevice(0).updateDescriptorSets(1, &writeSet, 0, nullptr);
 		}
 
+	}
+
+	void initPipeline()
+	{
 		//init Viewport
 		m_viewport.x(0.0f);
 		m_viewport.y(0.0f);
-		m_viewport.width(getWidth());
-		m_viewport.height(getHeight());
+		m_viewport.width((float)getWidth()/2);
+		m_viewport.height((float)getHeight());
 		m_viewport.minDepth(0.0f);
 		m_viewport.maxDepth(1.0f);
+
+		//init Viewport2
+		m_viewport2.x((float)getWidth()/2);
+		m_viewport2.y(0.0f);
+		m_viewport2.width((float)getWidth()/2);
+		m_viewport2.height((float)getHeight());
+		m_viewport2.minDepth(0.0f);
+		m_viewport2.maxDepth(1.0f);
 
 		//init Scissor
 		m_scissor.offset().x(0);
 		m_scissor.offset().y(0);
-		m_scissor.extent().width(getWidth());
+		m_scissor.extent().width(getWidth()/2);
 		m_scissor.extent().height(getHeight());
 
+		//init Scissor2
+		m_scissor2.offset().x(getWidth()/2);
+		m_scissor2.offset().y(0);
+		m_scissor2.extent().width(getWidth()/2);
+		m_scissor2.extent().height(getHeight());
+
+		//create Pipeline
 		m_pipeline.create(
 			m_devices.getVkDevice(0),
 			m_vertexShader.getVkShaderModule(),
 			m_fragmentShader.getVkShaderModule(),
 			m_descriptorSets.getVkDescriptorSetLayout(),
-			vertexBindings,
-			vertexAttributes,
+			m_vertexBindings,
+			m_vertexAttributes,
 			m_viewport,
 			m_scissor,
 			m_renderPass.getVkRenderPass());
+
+		//create Pipeline
+		m_pipeline2.create(
+			m_devices.getVkDevice(0),
+			m_vertexShader.getVkShaderModule(),
+			m_fragmentShader.getVkShaderModule(),
+			m_descriptorSets.getVkDescriptorSetLayout(),
+			m_vertexBindings,
+			m_vertexAttributes,
+			m_viewport2,
+			m_scissor2,
+			m_renderPass.getVkRenderPass());
+	}
+
+	virtual bool initialize()
+	{
+
+		m_vertexes[0][0] =  0.0f;
+		m_vertexes[0][1] =  1.0f;
+		m_vertexes[1][0] =  0.86f;
+		m_vertexes[1][1] = -0.5f;
+		m_vertexes[2][0] = -0.86f;
+		m_vertexes[2][1] = -0.5f;
+
+		setInterval(std::chrono::milliseconds(10));
+		vk::Result result;
+
+		m_instance = getInstance();
+		
+		m_devices.create(m_instance.getVkInstance(), getValidateFlag());
+
+		m_queue.init(m_devices.getVkDevice(0));
+
+		m_cmdBuf.create(m_devices.getVkDevice(0),2);
+		
+
+		initFramebuffer();
+
+		initShader();
+
+		initBuffer();
+
+		initDescriptor();
+
+		initPipeline();
+
 		{
 			//init SemaphoreCreateInfo
 			vk::SemaphoreCreateInfo semaphoreInfo;
@@ -396,14 +453,20 @@ private:
 		m_cmdBuf.getVkCommandBuffer(1).bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipeline.getVkPipelineLayout(), 0, 1, &m_descriptorSets.getVkDescriptorSet(0), 0, nullptr);
 
 		//set Viewport
-		m_cmdBuf.getVkCommandBuffer(1).setViewport(0, 1, &m_viewport);
+		//m_cmdBuf.getVkCommandBuffer(1).setViewport(0, 1, &m_viewport);
 
 		//set Scissor
-		m_cmdBuf.getVkCommandBuffer(1).setScissor(0, 1, &m_scissor);
+		//m_cmdBuf.getVkCommandBuffer(1).setScissor(0, 1, &m_scissor);
 
 		//bind VertexBuffer
 		vk::DeviceSize offset(0);
 		m_cmdBuf.getVkCommandBuffer(1).bindVertexBuffers(0, 1, &m_vertexBuffer.getVkBuffer(), &offset);
+
+		//draw
+		m_cmdBuf.getVkCommandBuffer(1).draw(3, 1, 0, 0);
+
+		//bind Pipeline
+		m_cmdBuf.getVkCommandBuffer(1).bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipeline2.getVkPipeline());
 
 		//draw
 		m_cmdBuf.getVkCommandBuffer(1).draw(3, 1, 0, 0);
@@ -465,9 +528,7 @@ private:
 };
 
 
-int main(
-	int argc,
-	char **argv)
+int main(int argc, char **argv)
 {
 	bool validate = true; // Use vulkan validation layer + debug report?
 	if (argc > 1)
@@ -477,7 +538,7 @@ int main(
 		}
 	}
 	simpleVulkan::Application* app = new TriangleApplication();
-	if (app->create("test", 400, 400, validate))
+	if (app->create("test", 800, 400, validate))
 	{
 		app->run();
 		app->destroy();

@@ -61,4 +61,27 @@ solution "SimpleVulkanSolution"
         "include"
      }
 
+  project "MultiViewport"
+     kind "ConsoleApp"
+     language "C++"
+     files { 
+        sources,
+        "example/multiviewport/*.cpp"
+     }
+     includedirs {
+        ".",
+        "include"
+     } 
+
+ project "MultiGPU"
+     kind "ConsoleApp"
+     language "C++"
+     files { 
+        sources,
+        "example/multigpu/*.cpp"
+     }
+     includedirs {
+        ".",
+        "include"
+     }
 

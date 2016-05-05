@@ -16,8 +16,10 @@ namespace simpleVulkan
        ~Queue();
 
        void init(vk::Device deivce);
-       Result submit(vk::CommandBuffer cmdBuffer);
-       Result submit(vk::CommandBuffer cmdBuffer,vk::Semaphore semaphore);
+       Result submit(
+		   vk::CommandBuffer cmdBuffer,
+		   const std::vector<vk::Semaphore>& waitSemaphores = std::vector<vk::Semaphore>(),
+		   const std::vector<vk::Semaphore>& signalSemaphores = std::vector<vk::Semaphore>());
        Result wait();
        Result present(vk::SwapchainKHR swapchain,uint32_t index);
 

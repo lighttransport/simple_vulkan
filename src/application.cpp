@@ -32,18 +32,14 @@ namespace simpleVulkan
         m_width = width;
         m_height = height;
 		m_validate = validate;
-        if(!InitGLFW(m_name,m_width,m_height,m_window))
+        if(!initGLFW(m_name,m_width,m_height,m_window))
         {
-            std::cerr << "failed to init GLFW" << std::endl;
             return false;
         }
-        auto&& extensions = createInstanceExtensions();
-        auto&& layers = createInstanceLayers();
-        if(vk::Result::eSuccess != m_instance.create(m_name,1,"SimpleVulkan",1,extensions,layers))
-        {
-            std::cerr << "failed to create vulkan instance" << std::endl;
-            return false;
-        }
+		if (initVulkan(name, createInstanceExtensions(), createInstanceLayers(), m_window, m_instance) != vk::Result::eSuccess)
+		{
+			return false;
+		}
 
 #if ENABLE_VALIDATION
 		if (getValidateFlag())
@@ -144,22 +140,33 @@ namespace simpleVulkan
         glfwSetWindowShouldClose(m_window,0);
     }
 
-    Instance* Application::getInstance()
+    Instance Application::getInstance()
     {
-        return &m_instance;
+        return m_instance;
     }
     
-    bool Application::InitGLFW(const std::string& name,uint32_t width,uint32_t height,GLFWwindow*& resultWindow)
+    bool Application::initGLFW(const std::string& name,uint32_t width,uint32_t height,GLFWwindow*& resultWindow)
     {
         glfwInit();
         if(!glfwVulkanSupported())
         {
+            std::cerr << "failed to init GLFW" << std::endl;
             return false;
         }
         glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
         resultWindow = glfwCreateWindow(width,height,name.c_str(),nullptr,nullptr);
         return true;
     }
+
+	Result Application::initVulkan(const std::string & name, const std::vector<const char*>& extensions, const std::vector<const char*>& layers,GLFWwindow * window,simpleVulkan::Instance & resultInstance)
+	{
+		Result result = resultInstance.create(name, 1, "SimpleVulkan", 1, extensions, layers, window);
+        if(vk::Result::eSuccess != result)
+        {
+            std::cerr << "failed to create vulkan instance" << std::endl;
+        }
+		return result;
+	}
 
     std::vector<const char*> Application::createInstanceExtensions()
     {

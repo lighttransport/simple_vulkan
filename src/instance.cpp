@@ -4,6 +4,7 @@
 #define VK_API_VERSION VK_API_VERSION_1_0
 #endif
 
+
 namespace simpleVulkan
 {
     Instance::Instance(){}
@@ -15,25 +16,17 @@ namespace simpleVulkan
             std::string engineName,
             std::uint32_t engineVersion,
             const std::vector<const char*>& extensions,
-            const std::vector<const char*>& layers)
+            const std::vector<const char*>& layers,
+			GLFWwindow* window)
     {
-        vk::Result result;
-
+		vk::Result result;
         //init ApplicationInfo
         vk::ApplicationInfo appInfo;
         appInfo.pApplicationName(applicationName.c_str()); 
-        appInfo.applicationVersion(applicationVersion);
-        appInfo.pEngineName(engineName.c_str());
+        appInfo.applicationVersion(1);
+        appInfo.pEngineName("SimpleVulkan");
         appInfo.engineVersion(engineVersion);
         appInfo.apiVersion(VK_API_VERSION);
-       
-        //std::vector<const char*> layers;
-        //layers.push_back("VK_LAYER_LUNARG_param_checker");
-        //layers.push_back("VK_LAYER_LUNARG_swapchain");
-        //layers.push_back("VK_LAYER_LUNARG_mem_tracker");
-        //layers.push_back("VK_LAYER_GOOGLE_unique_objects");
-        //deviceInfo.enabledLayerCount(layers.size());
-        //deviceInfo.ppEnabledLayerNames(layers.data());
 
         //init InstanceCreateInfo
         vk::InstanceCreateInfo instInfo;
@@ -45,18 +38,28 @@ namespace simpleVulkan
 
         //create Instance
         result = vk::createInstance(&instInfo,nullptr,&m_instance);
+
+		//get WindowSurface
+		glfwCreateWindowSurface(static_cast<VkInstance>(m_instance),window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&m_surface));
+
       
         return result;
     }
 
     void Instance::destroy()
     {
+		m_instance.destroySurfaceKHR(m_surface, nullptr);
         m_instance.destroy(nullptr);
     }
 
-    vk::Instance& Instance::getVkInstance()
+    vk::Instance Instance::getVkInstance()
     {
         return m_instance;
     }
+
+	vk::SurfaceKHR Instance::getSurface()
+	{
+		return m_surface;
+	}
 
 }

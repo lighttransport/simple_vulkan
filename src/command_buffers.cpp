@@ -43,6 +43,34 @@ namespace simpleVulkan
         m_device.destroyCommandPool(m_cmdPool,nullptr);;
     }
 
+	Result CommandBuffers::begin(size_t index)
+	{
+		vk::Result result;
+		//init CommandBufferInheritanceInfo
+		vk::CommandBufferInheritanceInfo cmdBufInheritanceInfo;
+
+		//init CommandBufferBeginInfo
+		vk::CommandBufferBeginInfo cmdBufBeginInfo;
+		cmdBufBeginInfo.pInheritanceInfo(&cmdBufInheritanceInfo);
+
+		//begin CommandBuffer
+		result = m_cmdBuffers[index].begin(&cmdBufBeginInfo);
+		return result;
+	}
+
+	Result CommandBuffers::end(size_t index)
+	{
+
+		vk::Result result;
+#ifdef VKCPP_ENHANCED_MODE
+		m_cmdBuffers[index].end();
+		result = vk::Result::eSuccess;
+#else
+		result = m_cmdBuffers[index].end();
+#endif
+		return result;
+	}
+
     vk::CommandPool& CommandBuffers::getVkCommandPool()
     {
         return m_cmdPool;
