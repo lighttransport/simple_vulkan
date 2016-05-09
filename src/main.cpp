@@ -3,7 +3,7 @@
 #include<vector>
 #include<iostream>
 #include<string>
-#include<vulkan/vk_cpp.h>
+#include<vulkan/vk_cpp.hpp>
 #include<vulkan/vulkan.h>
 #include<GLFW/glfw3.h>
 #include"simple_vulkan.h"

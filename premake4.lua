@@ -36,10 +36,12 @@ solution "SimpleVulkanSolution"
       configuration { "windows" }
          defines { 'NOMINMAX', '_LARGEFILE_SOURCE', '_FILE_OFFSET_BITS=64' }
          defines { 'VKCPP_ENHANCED_MODE' }
-         includedirs { "./deps/GLFW3/windows/include" }
-         includedirs { "./deps/vulkan/include" }
-         libdirs { "./deps/GLFW3/windows/lib" }
-         libdirs { "./deps/vulkan/windows/lib" }
+         includedirs { "%VULKAN_SDK%/Include" }
+         includedirs { "./deps/windows/glfw3/include" }
+         includedirs { "./deps/vkcpp" }
+         configuration { "x64" }
+            libdirs { "%VULKAN_SDK%/Bin" }
+            libdirs { "./deps/windows/glfw3/lib" }
          links { "glfw3",  "vulkan-1" }
 
 

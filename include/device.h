@@ -1,7 +1,7 @@
 #pragma once
 
 #include<vector>
-#include<vulkan/vk_cpp.h>
+#include<vulkan/vk_cpp.hpp>
 
 #include"instance.h"
 
