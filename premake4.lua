@@ -17,6 +17,7 @@ sources = {
 
 solution "SimpleVulkanSolution"
   configurations { "Release", "Debug" }
+  platforms { "x64", "x32" }
 
   configuration "Debug"
     defines { "DEBUG" }
@@ -28,7 +29,6 @@ solution "SimpleVulkanSolution"
     flags { "Symbols", "Optimize" }
     targetdir "bin/Release/"
 
-  platforms { "x64", "x32" }
  
   -- Windows general
   configuration { "windows" }

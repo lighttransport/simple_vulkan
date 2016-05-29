@@ -131,12 +131,35 @@ private:
                 getWidth(),
                 getHeight());
 
+        gpu.colorImage.barrier(
+                gpu.cmdBuf.getVkCommandBuffer(0),
+                vk::AccessFlags(),
+                vk::AccessFlagBits::eMemoryRead,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eGeneral,
+                vk::PipelineStageFlagBits::eAllCommands,
+                vk::PipelineStageFlagBits::eTopOfPipe
+                );
+
+
+                
+
 		gpu.depthImage.create(
             gpu.device.getVkDevice(),
 			m_depthFormat,
 			vk::ImageUsageFlagBits::eDepthStencilAttachment,
 			getWidth(),
 			getHeight());
+
+        gpu.depthImage.barrier(
+                gpu.cmdBuf.getVkCommandBuffer(0),
+                vk::AccessFlags(),
+                vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eGeneral,
+                vk::PipelineStageFlagBits::eAllCommands,
+                vk::PipelineStageFlagBits::eTopOfPipe
+                );
 
 		gpu.cmdBuf.end(0);
 
@@ -263,11 +286,11 @@ private:
         //init SemaphoreCreateInfo
         vk::SemaphoreCreateInfo semaphoreInfo;
 
-        //create Semaphore
-        gpu.device.getVkDevice().createSemaphore(
-                &semaphoreInfo,
-                nullptr,
-                &gpu.semaphore);
+        ////create Semaphore
+        //gpu.device.getVkDevice().createSemaphore(
+        //        &semaphoreInfo,
+        //        nullptr,
+        //        &gpu.semaphore);
     }
 
     void updateRenderingData()
@@ -323,7 +346,7 @@ private:
 		{
 			//clear depth
 			vk::ClearDepthStencilValue clearDepth(1.0f, 0);
-			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1);
+            vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1);
 			gpu.cmdBuf.getVkCommandBuffer(1).clearDepthStencilImage(gpu.depthImage.getVkImage(), vk::ImageLayout::eGeneral, &clearDepth, 1, &range);
 		}
 
@@ -381,8 +404,7 @@ private:
 		gpu.cmdBuf.getVkCommandBuffer(1).end();
 
 		//submit Queue
-		gpu.queue.submit(gpu.cmdBuf.getVkCommandBuffer(1), { gpu.semaphore });
-
+		gpu.queue.submit(gpu.cmdBuf.getVkCommandBuffer(1),{}, {});
     }
 
     void waitCalcGPU(CalcGPU& gpu)
@@ -418,12 +440,13 @@ private:
         
         //render
         renderCalcGPU(m_calcGPU[0]);
-        renderCalcGPU(m_calcGPU[1]);
+        //renderCalcGPU(m_calcGPU[1]);
 
         //wain Device
         waitCalcGPU(m_calcGPU[0]);
-        waitCalcGPU(m_calcGPU[1]);
+        //waitCalcGPU(m_calcGPU[1]);
 
+        
 
 		std::cout << "BufferIndex:" << m_bufferIndex << std::endl;
         std::cout << "Time:" << glfwGetTime() << std::endl;
