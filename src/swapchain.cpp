@@ -11,7 +11,7 @@ namespace simpleVulkan
     Result Swapchain::create(
 			vk::PhysicalDevice physicalDevice,
             vk::Device device,
-            vk::SurfaceKHR& surface,
+            vk::SurfaceKHR surface,
             vk::ImageUsageFlags usage,
             uint32_t width,
             uint32_t height)
@@ -76,8 +76,6 @@ namespace simpleVulkan
 		{
 			return vk::Result::eErrorInitializationFailed;
 		}
-
-
         //init SwapchainCreateInfo
         vk::SwapchainCreateInfoKHR swapchainInfo;
         swapchainInfo.flags(vk::SwapchainCreateFlagBitsKHR{});
@@ -111,50 +109,24 @@ namespace simpleVulkan
         {
             return result;
         }
-        m_images.resize(swapchainCount);
-        result = m_device.getSwapchainImagesKHR(m_swapchain,&swapchainCount,m_images.data());
+        std::vector<vk::Image> images(swapchainCount);
+        result = m_device.getSwapchainImagesKHR(m_swapchain,&swapchainCount,images.data());
         if(result != vk::Result::eSuccess)
         {
             return result;
         }
 
-        //create SwapchainImageViews
-        m_imageViews.resize(swapchainCount);
-        vk::ImageAspectFlags aspect;
-        if(m_usage & vk::ImageUsageFlagBits::eColorAttachment)
+        m_images.resize(images.size());
+        for(int i=0;i<m_images.size();++i)
         {
-            aspect |= vk::ImageAspectFlagBits::eColor;
-        }
-        if(m_usage & vk::ImageUsageFlagBits::eDepthStencilAttachment)
-        {
-            aspect |= vk::ImageAspectFlagBits::eDepth;
-        }
-        for(uint32_t i=0;i<swapchainCount;++i)
-        {
-            //init SwapchainImageViewCreateInfo
-            vk::ImageViewCreateInfo imageViewInfo;
-            imageViewInfo.flags(vk::ImageViewCreateFlagBits());
-            imageViewInfo.image(m_images[i]);
-            imageViewInfo.viewType(vk::ImageViewType::e2D);
-            imageViewInfo.format(m_format);
-            imageViewInfo.components().r(vk::ComponentSwizzle::eR);
-            imageViewInfo.components().g(vk::ComponentSwizzle::eG);
-            imageViewInfo.components().b(vk::ComponentSwizzle::eB);
-            imageViewInfo.components().a(vk::ComponentSwizzle::eA);
-            imageViewInfo.subresourceRange().aspectMask(aspect);
-            imageViewInfo.subresourceRange().baseMipLevel(0);
-            imageViewInfo.subresourceRange().levelCount(1);
-            imageViewInfo.subresourceRange().baseArrayLayer(0);
-            imageViewInfo.subresourceRange().layerCount(1);
-
-            //create SwapchainImageView
-            result = m_device.createImageView(&imageViewInfo,nullptr,&m_imageViews[i]);
-            if(result != vk::Result::eSuccess)
-            {
-                return result;
-            }
+            m_images[i].create(m_device,m_format,m_usage,m_width,m_height,images[i]);
         }
         return result;
+    }
+    
+    std::vector<simpleVulkan::Image>& Swapchain::getImages()
+    {
+        return m_images;
     }
 
     vk::ImageUsageFlags Swapchain::getUsage()
@@ -183,11 +155,11 @@ namespace simpleVulkan
     }
     vk::Image& Swapchain::getVkImage(size_t index)
     {
-        return m_images[index];
+        return m_images[index].getVkImage();
     }
     vk::ImageView& Swapchain::getVkImageView(size_t index)
     {
-        return m_imageViews[index];
+        return m_images[index].getVkImageView();
     }
 
 }

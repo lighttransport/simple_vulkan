@@ -7,20 +7,20 @@
 
 namespace simpleVulkan
 {
-    class Devices
+    class Device
     { 
    private:
-       std::vector<vk::PhysicalDevice> m_physicalDevices;
-       std::vector<vk::Device> m_devices;
+       vk::PhysicalDevice m_physicalDevice;
+       vk::Device m_device;
    public:
-       Devices();
-       ~Devices();
+       Device();
+       ~Device();
 
-       Result create(vk::Instance instance, bool validate);
+       Result create(vk::Instance instance,size_t deviceIndex, bool validate);
        void destroy();
        size_t count();
 
-	   vk::PhysicalDevice& getVkPhysicalDevice(size_t index);
-       vk::Device& getVkDevice(size_t index);
+	   vk::PhysicalDevice& getVkPhysicalDevice();
+       vk::Device& getVkDevice();
     };
 }

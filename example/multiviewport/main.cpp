@@ -11,7 +11,7 @@
 #include"simple_vulkan.h"
 
 
-class TriangleApplication : public simpleVulkan::Application
+class MultiViewportApplication : public simpleVulkan::Application
 {
 	vk::Format m_colorFormat;
 	vk::Format m_depthFormat = vk::Format::eD24UnormS8Uint;
@@ -23,7 +23,7 @@ class TriangleApplication : public simpleVulkan::Application
 	const std::string m_fragShaderName = "./frag.spv";
 
 	simpleVulkan::Instance m_instance;
-	simpleVulkan::Devices m_devices;
+	simpleVulkan::Device m_device;
 	simpleVulkan::Queue m_queue;
 	simpleVulkan::CommandBuffers m_cmdBuf;
 	simpleVulkan::Swapchain m_swapchain;
@@ -60,7 +60,7 @@ private:
 
 		m_cmdBuf.begin(0);
 
-		m_swapchain.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), m_instance.getSurface(), vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
+		m_swapchain.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), m_instance.getSurface(), vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
 		m_colorFormat = m_swapchain.getFormat();
 
 		for (int i = 0; i < m_swapchain.count(); ++i)
@@ -92,7 +92,7 @@ private:
 		}
 
 		m_depthImage.create(
-			m_devices.getVkDevice(0),
+			m_device.getVkDevice(),
 			m_depthFormat,
 			vk::ImageUsageFlagBits::eDepthStencilAttachment,
 			getWidth(),
@@ -133,14 +133,14 @@ private:
 		//wait queue
 		m_queue.wait();
 
-		m_renderPass.create(m_devices.getVkDevice(0), m_colorFormat, m_depthFormat);
+		m_renderPass.create(m_device.getVkDevice(), m_colorFormat, m_depthFormat);
 
 		{
 			m_FrameBuffers.resize(m_swapchain.count());
 			for (size_t i = 0; i < m_FrameBuffers.size(); ++i)
 			{
 				m_FrameBuffers[i].create(
-					m_devices.getVkDevice(0),
+					m_device.getVkDevice(),
 					getWidth(),
 					getHeight(),
 					m_swapchain.getVkImageView(i),
@@ -160,7 +160,7 @@ private:
 			std::cout << "could not read vertex shader!!" << std::endl;
 		}
 
-		m_vertexShader.create(m_devices.getVkDevice(0), code.size(), code.data());
+		m_vertexShader.create(m_device.getVkDevice(), code.size(), code.data());
 
 		//read FragShader
 		code.clear();
@@ -169,7 +169,7 @@ private:
 			std::cout << "could not read fragment shader!!" << std::endl;
 		}
 
-		m_fragmentShader.create(m_devices.getVkDevice(0), code.size(), code.data());
+		m_fragmentShader.create(m_device.getVkDevice(), code.size(), code.data());
 	}
 
 	void initBuffer()
@@ -189,13 +189,13 @@ private:
 		m_vertexAttributes[0].offset(0);
 
 		//create VertexBuffer
-		m_vertexBuffer.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
+		m_vertexBuffer.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
 
 		//write VertexBuffer
 		m_vertexBuffer.write(reinterpret_cast<const void*>(m_vertexes));
 
 		//create FragmentBuffer
-		m_matrixBuffer.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
+		m_matrixBuffer.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
 
 		//write FragmentBuffer
 		m_matrixBuffer.write(reinterpret_cast<const void*>(m_matrix));
@@ -212,7 +212,7 @@ private:
 		layoutBinding[0].pImmutableSamplers(nullptr);
 		layoutBinding[0].descriptorCount(1);
 
-		m_descriptorSets.create(m_devices.getVkDevice(0), layoutBinding, 1);
+		m_descriptorSets.create(m_device.getVkDevice(), layoutBinding, 1);
 
 		//write DescriptorSet
 		{
@@ -233,7 +233,7 @@ private:
 			writeSet.pBufferInfo(&bufferInfo);
 
 			//update DescriptorSet
-			m_devices.getVkDevice(0).updateDescriptorSets(1, &writeSet, 0, nullptr);
+			m_device.getVkDevice().updateDescriptorSets(1, &writeSet, 0, nullptr);
 		}
 
 	}
@@ -270,7 +270,7 @@ private:
 
 		//create Pipeline
 		m_pipeline.create(
-			m_devices.getVkDevice(0),
+			m_device.getVkDevice(),
 			m_vertexShader.getVkShaderModule(),
 			m_fragmentShader.getVkShaderModule(),
 			m_descriptorSets.getVkDescriptorSetLayout(),
@@ -282,7 +282,7 @@ private:
 
 		//create Pipeline
 		m_pipeline2.create(
-			m_devices.getVkDevice(0),
+			m_device.getVkDevice(),
 			m_vertexShader.getVkShaderModule(),
 			m_fragmentShader.getVkShaderModule(),
 			m_descriptorSets.getVkDescriptorSetLayout(),
@@ -308,11 +308,11 @@ private:
 
 		m_instance = getInstance();
 		
-		m_devices.create(m_instance.getVkInstance(), getValidateFlag());
+		m_device.create(m_instance.getVkInstance(),0, getValidateFlag());
 
-		m_queue.init(m_devices.getVkDevice(0));
+		m_queue.init(m_device.getVkDevice());
 
-		m_cmdBuf.create(m_devices.getVkDevice(0),2);
+		m_cmdBuf.create(m_device.getVkDevice(),2);
 		
 
 		initFramebuffer();
@@ -331,14 +331,14 @@ private:
 			semaphoreInfo.flags(vk::SemaphoreCreateFlagBits());
 
 			//create Semaphore
-			result = m_devices.getVkDevice(0).createSemaphore(
+			result = m_device.getVkDevice().createSemaphore(
                     &semaphoreInfo,
                     nullptr,
                     &m_semaphore);
 		}
 
 		//acquire next Image
-		result = m_devices.getVkDevice(0).acquireNextImageKHR(
+		result = m_device.getVkDevice().acquireNextImageKHR(
                 m_swapchain.getVkSwapchainKHR(),
                 400000000, 
                 m_semaphore,
@@ -510,7 +510,7 @@ private:
 		m_queue.present(m_swapchain.getVkSwapchainKHR(), m_bufferIndex);
 
 		//acquire next Image
-		result = m_devices.getVkDevice(0).acquireNextImageKHR(
+		result = m_device.getVkDevice().acquireNextImageKHR(
                 m_swapchain.getVkSwapchainKHR(),
                 400000000, 
                 m_semaphore,
@@ -518,7 +518,7 @@ private:
                 &m_bufferIndex);
 
 		//wait Device
-		//m_devices.getVkDevice(0).waitIdle();
+		//m_device.getVkDevice().waitIdle();
 
 		std::cout << "BufferIndex:" << m_bufferIndex << std::endl;
         std::cout << "Time:" << glfwGetTime() << std::endl;
@@ -537,7 +537,7 @@ int main(int argc, char **argv)
 			validate = false;
 		}
 	}
-	simpleVulkan::Application* app = new TriangleApplication();
+	simpleVulkan::Application* app = new MultiViewportApplication();
 	if (app->create("test", 800, 400, validate))
 	{
 		app->run();

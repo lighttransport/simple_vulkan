@@ -5,7 +5,7 @@
 #include<device.h>
 #include<vector>
 
-#include"device.h"
+#include"image.h"
 
 namespace simpleVulkan
 {
@@ -17,8 +17,7 @@ namespace simpleVulkan
         uint32_t m_width;
         uint32_t m_height;
         vk::SwapchainKHR m_swapchain;
-        std::vector<vk::Image> m_images;
-        std::vector<vk::ImageView> m_imageViews;
+        std::vector<simpleVulkan::Image> m_images;
    public:
         Swapchain();
         ~Swapchain();
@@ -26,12 +25,13 @@ namespace simpleVulkan
 		Result create(
 				vk::PhysicalDevice physicalDevice,
                 vk::Device device,
-                vk::SurfaceKHR& surface,
+                vk::SurfaceKHR surface,
                 vk::ImageUsageFlags usage,
                 uint32_t width,
                 uint32_t height);
         void destroy();
 
+        std::vector<simpleVulkan::Image>& getImages();
         vk::ImageUsageFlags getUsage();
         vk::Format getFormat();
         uint32_t getWidth();

@@ -1,7 +1,5 @@
 #pragma once
 #include<vulkan/vk_cpp.h>
-#include"device.h"
-#include"swapchain.h"
 
 namespace simpleVulkan
 {
@@ -14,19 +12,38 @@ namespace simpleVulkan
 
         vk::Format m_format;
         vk::ImageUsageFlags m_usage;
+        vk::ImageAspectFlags m_aspect;
         int32_t m_width;
         int32_t m_height;
    public:
         Image();
         ~Image();
 
-        Result create(
+        vk::Result create(
                 vk::Device device,
                 vk::Format format,
                 vk::ImageUsageFlags usage,
                 uint32_t width,
                 uint32_t height);
+
+        vk::Result create(
+                vk::Device device,
+                vk::Format format,
+                vk::ImageUsageFlags usage,
+                uint32_t width,
+                uint32_t height,
+                vk::Image image);
+
         void destroy();
+
+        void barrier(
+                vk::CommandBuffer cmdBuf,
+                vk::AccessFlags srcAccessMask,
+                vk::AccessFlags dstAccessMask,
+                vk::ImageLayout oldImageLayout,
+                vk::ImageLayout newImageLayout,
+                vk::PipelineStageFlags srcStageMask,
+                vk::PipelineStageFlags dstStageMask);
 
         vk::Format getFormat();
         int32_t getWidth();

@@ -23,7 +23,7 @@ class TriangleApplication : public simpleVulkan::Application
 	const std::string m_fragShaderName = "./frag.spv";
 
 	simpleVulkan::Instance m_instance;
-	simpleVulkan::Devices m_devices;
+	simpleVulkan::Device m_device;
 	simpleVulkan::Queue m_queue;
 	simpleVulkan::CommandBuffers m_cmdBuf;
 	simpleVulkan::Swapchain m_swapchain;
@@ -53,69 +53,38 @@ private:
 	void initImages()
 	{
 
-		m_swapchain.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), m_instance.getSurface(), vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
+		m_swapchain.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), m_instance.getSurface(), vk::ImageUsageFlagBits::eColorAttachment, getWidth(), getHeight());
 		m_colorFormat = m_swapchain.getFormat();
 
 		for (int i = 0; i < m_swapchain.count(); ++i)
 		{
-			//init ImageMemoryBarrier
-			vk::ImageMemoryBarrier barrier;
-			barrier.srcAccessMask(vk::AccessFlagBits());
-			barrier.dstAccessMask(vk::AccessFlagBits::eMemoryRead);
-			barrier.oldLayout(vk::ImageLayout::eUndefined);
-			barrier.newLayout(vk::ImageLayout::ePresentSrcKHR);
-			barrier.image(m_swapchain.getVkImage(i));
-			barrier.subresourceRange().aspectMask(vk::ImageAspectFlagBits::eColor);
-			barrier.subresourceRange().baseMipLevel(0);
-			barrier.subresourceRange().levelCount(1);
-			barrier.subresourceRange().baseArrayLayer(0);
-			barrier.subresourceRange().layerCount(1);
-
 			//layout SwapchainImage
-			m_cmdBuf.getVkCommandBuffer(0).pipelineBarrier(
+            m_swapchain.getImages()[i].barrier(
+                    m_cmdBuf.getVkCommandBuffer(0),
+                    vk::AccessFlagBits(),
+                    vk::AccessFlagBits::eMemoryRead,
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::ePresentSrcKHR,
 			        vk::PipelineStageFlagBits::eTopOfPipe,
-			        vk::PipelineStageFlagBits::eTopOfPipe,
-			        vk::DependencyFlagBits(),
-			        0,
-			        nullptr,
-			        0,
-			        nullptr,
-		  	        1,
-			        &barrier);
+			        vk::PipelineStageFlagBits::eTopOfPipe);
 		}
 
 		m_depthImage.create(
-			m_devices.getVkDevice(0),
+			m_device.getVkDevice(),
 			m_depthFormat,
 			vk::ImageUsageFlagBits::eDepthStencilAttachment,
 			getWidth(),
 			getHeight());
 
-		//init ImageMemoryBarrier
-		vk::ImageMemoryBarrier barrier;
-		barrier.srcAccessMask(vk::AccessFlagBits());
-		barrier.dstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentRead);
-		barrier.oldLayout(vk::ImageLayout::eUndefined);
-		barrier.newLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-		barrier.image(m_depthImage.getVkImage());
-		barrier.subresourceRange().aspectMask(vk::ImageAspectFlagBits::eDepth);
-		barrier.subresourceRange().baseMipLevel(0);
-		barrier.subresourceRange().levelCount(1);
-		barrier.subresourceRange().baseArrayLayer(0);
-		barrier.subresourceRange().layerCount(1);
-
 		//layout DepthImage
-		m_cmdBuf.getVkCommandBuffer(0).pipelineBarrier(
-
-			vk::PipelineStageFlagBits::eTopOfPipe,
-			vk::PipelineStageFlagBits::eTopOfPipe,
-			vk::DependencyFlagBits(),
-			0,
-			nullptr,
-			0,
-			nullptr,
-			1,
-			&barrier);
+        m_depthImage.barrier(m_cmdBuf.getVkCommandBuffer(0),
+		vk::AccessFlagBits(),
+		vk::AccessFlagBits::eDepthStencilAttachmentRead,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eTopOfPipe
+        );
 	}
 
 	virtual bool initialize()
@@ -133,11 +102,11 @@ private:
 
 		m_instance = getInstance();
 		
-		m_devices.create(m_instance.getVkInstance(), getValidateFlag());
+		m_device.create(m_instance.getVkInstance(),0, getValidateFlag());
 
-		m_queue.init(m_devices.getVkDevice(0));
+		m_queue.init(m_device.getVkDevice());
 
-		m_cmdBuf.create(m_devices.getVkDevice(0),2);
+		m_cmdBuf.create(m_device.getVkDevice(),2);
 		
 		m_cmdBuf.begin(0);
 
@@ -145,14 +114,14 @@ private:
 
 		m_cmdBuf.end(0);
 
-		m_renderPass.create(m_devices.getVkDevice(0), m_colorFormat, m_depthFormat);
+		m_renderPass.create(m_device.getVkDevice(), m_colorFormat, m_depthFormat);
 
 		{
 			m_FrameBuffers.resize(m_swapchain.count());
 			for (size_t i = 0; i < m_FrameBuffers.size(); ++i)
 			{
 				m_FrameBuffers[i].create(
-					m_devices.getVkDevice(0),
+					m_device.getVkDevice(),
 					getWidth(),
 					getHeight(),
 					m_swapchain.getVkImageView(i),
@@ -175,7 +144,7 @@ private:
 			std::cout << "could not read vertex shader!!" << std::endl;
 		}
 
-		m_vertexShader.create(m_devices.getVkDevice(0), code.size(), code.data());
+		m_vertexShader.create(m_device.getVkDevice(), code.size(), code.data());
 
 		//read FragShader
 		code.clear();
@@ -184,7 +153,7 @@ private:
 			std::cout << "could not read fragment shader!!" << std::endl;
 		}
 
-		m_fragmentShader.create(m_devices.getVkDevice(0), code.size(), code.data());
+		m_fragmentShader.create(m_device.getVkDevice(), code.size(), code.data());
 
 		std::vector<vk::VertexInputBindingDescription> vertexBindings(1);
 		std::vector<vk::VertexInputAttributeDescription> vertexAttributes(1);
@@ -201,13 +170,13 @@ private:
 		vertexAttributes[0].offset(0);
 
 		//create VertexBuffer
-		m_vertexBuffer.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
+		m_vertexBuffer.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), vk::BufferUsageFlagBits::eVertexBuffer, sizeof(m_vertexes));
 
 		//write VertexBuffer
 		m_vertexBuffer.write(reinterpret_cast<const void*>(m_vertexes));
 
 		//create FragmentBuffer
-		m_matrixBuffer.create(m_devices.getVkPhysicalDevice(0), m_devices.getVkDevice(0), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
+		m_matrixBuffer.create(m_device.getVkPhysicalDevice(), m_device.getVkDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(m_matrix));
 
 		//write FragmentBuffer
 		m_matrixBuffer.write(reinterpret_cast<const void*>(m_matrix));
@@ -220,7 +189,7 @@ private:
 		layoutBinding[0].pImmutableSamplers(nullptr);
 		layoutBinding[0].descriptorCount(1);
 
-		m_descriptorSets.create(m_devices.getVkDevice(0), layoutBinding, 1);
+		m_descriptorSets.create(m_device.getVkDevice(), layoutBinding, 1);
 
 		//write DescriptorSet
 		{
@@ -241,7 +210,7 @@ private:
 			writeSet.pBufferInfo(&bufferInfo);
 
 			//update DescriptorSet
-			m_devices.getVkDevice(0).updateDescriptorSets(1, &writeSet, 0, nullptr);
+			m_device.getVkDevice().updateDescriptorSets(1, &writeSet, 0, nullptr);
 		}
 
 		//init Viewport
@@ -259,7 +228,7 @@ private:
 		m_scissor.extent().height(getHeight());
 
 		m_pipeline.create(
-			m_devices.getVkDevice(0),
+			m_device.getVkDevice(),
 			m_vertexShader.getVkShaderModule(),
 			m_fragmentShader.getVkShaderModule(),
 			m_descriptorSets.getVkDescriptorSetLayout(),
@@ -274,14 +243,14 @@ private:
 			semaphoreInfo.flags(vk::SemaphoreCreateFlagBits());
 
 			//create Semaphore
-			result = m_devices.getVkDevice(0).createSemaphore(
+			result = m_device.getVkDevice().createSemaphore(
                     &semaphoreInfo,
                     nullptr,
                     &m_semaphore);
 		}
 
 		//acquire next Image
-		result = m_devices.getVkDevice(0).acquireNextImageKHR(
+		result = m_device.getVkDevice().acquireNextImageKHR(
                 m_swapchain.getVkSwapchainKHR(),
                 400000000, 
                 m_semaphore,
@@ -447,7 +416,7 @@ private:
 		m_queue.present(m_swapchain.getVkSwapchainKHR(), m_bufferIndex);
 
 		//acquire next Image
-		result = m_devices.getVkDevice(0).acquireNextImageKHR(
+		result = m_device.getVkDevice().acquireNextImageKHR(
                 m_swapchain.getVkSwapchainKHR(),
                 400000000, 
                 m_semaphore,
@@ -455,7 +424,7 @@ private:
                 &m_bufferIndex);
 
 		//wait Device
-		//m_devices.getVkDevice(0).waitIdle();
+		//m_device.getVkDevice().waitIdle();
 
 		std::cout << "BufferIndex:" << m_bufferIndex << std::endl;
         std::cout << "Time:" << glfwGetTime() << std::endl;

@@ -4,10 +4,10 @@
 
 namespace simpleVulkan
 {
-    Devices::Devices(){}
-    Devices::~Devices(){}
+    Device::Device(){}
+    Device::~Device(){}
    
-    Result Devices::create(vk::Instance instance, bool validate)
+    Result Device::create(vk::Instance instance,size_t deviceIndex, bool validate)
     {
         vk::Result result;
         //get PhysicalDevices
@@ -17,27 +17,25 @@ namespace simpleVulkan
         {
             return result;
         }
-        m_physicalDevices.resize(physDevicesNum);
+        std::vector<vk::PhysicalDevice> physicalDevices(physDevicesNum);
         result = instance.enumeratePhysicalDevices(
                 &physDevicesNum,
-                m_physicalDevices.data());
-
+                physicalDevices.data());
         if(result != vk::Result::eSuccess)
         {
             return result;
         }
+        m_physicalDevice = physicalDevices[deviceIndex];
 
         //create Devices
-        m_devices.resize(m_physicalDevices.size());
-        for(size_t deviceIndex=0;deviceIndex<m_devices.size();++deviceIndex)
         {
-
             //get QueueFamilyProperties
             uint32_t queueFamilyPropertiesCount;
-            m_physicalDevices[deviceIndex].getQueueFamilyProperties(&queueFamilyPropertiesCount, nullptr);
+            m_physicalDevice.getQueueFamilyProperties(&queueFamilyPropertiesCount, nullptr);
             std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertiesCount);
-            m_physicalDevices[deviceIndex].getQueueFamilyProperties(&queueFamilyPropertiesCount, queueFamilyProperties.data());
+            m_physicalDevice.getQueueFamilyProperties(&queueFamilyPropertiesCount, queueFamilyProperties.data());
 
+            //find collect FamilyIndex
             uint32_t familyIndex;
             for (int i =0; i < queueFamilyProperties.size(); ++i)
             {
@@ -52,7 +50,6 @@ namespace simpleVulkan
             float queueProperties {0.0f};
             queueInfo.queueFamilyIndex(familyIndex);
             queueInfo.queueCount(1);
-            queueInfo.pQueuePriorities(&queueProperties);
 
             //init DeviceCreateInfo
             vk::DeviceCreateInfo deviceInfo;
@@ -76,27 +73,22 @@ namespace simpleVulkan
             deviceInfo.ppEnabledLayerNames(layers.data());
 
             //create Device
-            result = m_physicalDevices[deviceIndex].createDevice(&deviceInfo,nullptr,&m_devices[deviceIndex]);
+            result = m_physicalDevice.createDevice(&deviceInfo,nullptr,&m_device);
         }
         return result;
     }
 
-    void Devices::destroy()
+    void Device::destroy()
     {
-        for(vk::Device& device:m_devices)
-        {
-           device.destroy(nullptr);
-        }
+        m_device.destroy(nullptr);
     }
 
-	vk::PhysicalDevice& Devices::getVkPhysicalDevice(size_t index)
+	vk::PhysicalDevice& Device::getVkPhysicalDevice()
 	{
-		return m_physicalDevices[index];
+		return m_physicalDevice;
 	}
-	vk::Device& Devices::getVkDevice(size_t index)
+	vk::Device& Device::getVkDevice()
     {
-        return m_devices[index];
+        return m_device;
     }
-
-
 }
